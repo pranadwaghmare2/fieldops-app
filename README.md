@@ -75,11 +75,11 @@ NativeWind host wiring (already in this repo):
 
 ```
 app/                 Expo Router shells + providers
-src/core/            theme, config, domain, integrations
-src/features/        work-orders feature folders (screens TBD)
+src/core/            theme, config, types, integrations
+src/features/        work-orders (list screen live; detail/form stubs)
 mock-api/            local Node API
 ```
 
 ## Status
 
-Foundation only: architecture, Cursor rules, Expo shell, integration ports. Work-order screens come next.
+Screen 1 (work-order list) is live: cursor pagination, status filter, debounced search, pull-to-refresh, distinct empty/error states. Detail and create routes are placeholders for now.

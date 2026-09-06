@@ -24,7 +24,7 @@ All Query usage goes through `core/integrations/query`. Features never import `@
 
 ## Errors
 
-- Map transport failures through the http `ApiError` port before UI messaging.
+- Map transport failures with http `toApiError` (Axios stays in the port). UI reads `ApiError` from `core/types` via `isApiError` from `core/utils`.
 - Distinguish empty list, filtered empty, and request error in the ViewModel — never one generic blank screen.
 
 ## Testing

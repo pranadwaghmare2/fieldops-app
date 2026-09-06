@@ -15,7 +15,7 @@ No coverage percentage target. Test the risk surface that protects users and arc
 4. **Form Zod** — urgent priority requires due within 48 hours.
 5. **422 mapping** — server `errors` map lands on the correct fields via form adapter.
 6. **409 conflict** — user never silently loses typed input.
-7. **Http port** — `ApiError` normalization for 422 / 409 / retryable 500.
+7. **Http / envelopes** — `toApiError` normalization for 422 / 409 / retryable 500; `isApiError` util guard.
 
 ## Explicitly skip
 
@@ -28,11 +28,11 @@ If a whole class of tests is deliberately skipped, log it under `DECISIONS.md` c
 
 ## Tooling & placement
 
-- Jest + `@testing-library/react-native` for UI behaviour.
+- Jest + `@testing-library/react-native` for UI behaviour when needed.
 - Query by role, label, or text — never by internal className strings.
-- Colocate `*.test.ts(x)` next to the unit under test.
+- **All tests live under top-level `tests/`, mirroring `src/` paths** (e.g. `tests/core/utils/…`, `tests/features/work-orders/list/…`). Do **not** colocate `*.test.ts(x)` under `src/features/**` or other `src/` folders.
 - Prefer testing through public ports and ViewModel hooks. Do not mock the unit under test’s own internals lightly.
-- Pure domain / utils get direct unit tests without rendering when behaviour is non-trivial.
+- Pure `core/types` / utils get direct unit tests without rendering when behaviour is non-trivial.
 
 ## Failure signals (fix design, not the test)
 

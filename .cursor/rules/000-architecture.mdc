@@ -27,7 +27,7 @@ src/
     config/                     # JSON timeouts/limits + env loader
     constants/                  # messages, status/priority enums
     utils/                      # app-wide pure helpers (date, …)
-    domain/                     # pure types and mappers — no I/O
+    types/                      # shared pure types + mappers — no I/O
     integrations/
       http/                     # Axios + API error normalize + API ports
       query/                    # QueryClient provider + wrappers + key factory
@@ -38,6 +38,7 @@ src/
   features/
     work-orders/
       list|detail|form/
+        types/                  # feature-local types only
         hooks/                  # ViewModels
         components/
         screens/                # dumb UI
@@ -49,7 +50,7 @@ mock-api/                       # do not modify server.js
 ### Dependency direction (enforced on every change)
 
 ```
-core/theme|config|constants|utils|domain
+core/theme|config|constants|utils|types
                 ↓
         core/integrations/*
                 ↓
@@ -81,12 +82,12 @@ core/theme|config|constants|utils|domain
 
 ---
 
-### Layer: `core/config` | `constants` | `utils` | `domain`
+### Layer: `core/config` | `constants` | `utils` | `types`
 
 - **config** — timeouts, debounce ms, page size (JSON + typed loaders); `EXPO_PUBLIC_API_URL` via env helper.
 - **constants** — user-facing copy strings, status/priority enums aligned with mock API.
-- **utils** — app-wide pure helpers. Feature-only helpers stay under that feature.
-- **domain** — WorkOrder/User types and pure mappers. No React, no I/O.
+- **utils** — app-wide pure helpers (dates, `isApiError`, …). Feature-only helpers stay under that feature.
+- **types** — shared WorkOrder/User, API envelopes (`ApiSuccess`, `ApiError`, `ApiErrorKind`, `CursorPage`), and later shared mappers. No React, no I/O. Import as `@/core/types`.
 
 ---
 
@@ -108,7 +109,10 @@ core/theme|config|constants|utils|domain
 
 **Responsibility:** Feature slices with hook ViewModels and dumb screens/components.
 
-**Per-area folders:** `hooks/`, `components/`, `screens/`, optional local `constants/`, `utils/`.
+**Per-area folders:** `types/`, `hooks/`, `components/`, `screens/`, optional local `constants/`, `utils/`.
+
+- Feature `types/` holds ViewModel return unions, filter unions, and exported component prop types. Do not leave those in hook files as the only home.
+- Shared models belong in `core/types`, not under a feature `types/` folder.
 
 **Must not:** import Axios, `@tanstack/*`, `react-hook-form`, `zod`, `nativewind`, `@pranadwaghmare2/fieldops-ui`, `expo-image` by package path.
 
@@ -128,5 +132,8 @@ core/theme|config|constants|utils|domain
 - Second colour theme or dark mode system.
 - Collapsing this repo with `fieldops-ui` into a monorepo as the distribution model.
 - Putting adapter code inside `features/*/`.
+- Feature UI state types living only inside hooks; shared models living under a feature `types/` folder.
+- Hard-coding resource models (e.g. `WorkOrder`) on shared `ApiError`; owning `ApiError` types inside an integration port.
+- Colocating `*.test.ts(x)` under `src/` (tests belong in top-level `tests/` — see `020-testing.mdc`).
 - Logic-heavy `app/*.tsx` route files.
 - Documenting architecture by name-dropping “clean” / “SOLID” without following the folder contracts above.

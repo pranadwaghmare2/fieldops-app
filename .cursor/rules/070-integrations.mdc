@@ -7,7 +7,7 @@ alwaysApply: true
 
 Whole purpose: swap or upgrade a library by editing `src/core/integrations/*` only.
 
-## Ban (features, screens, domain, utils)
+## Ban (features, screens, types, utils)
 
 Do **not** import by package path:
 
@@ -21,13 +21,15 @@ Do **not** import by package path:
 
 Import the matching port from `src/core/integrations/<port>` instead.
 
-Allowed outside integrations: `react`, `react-native`, Expo Router APIs in `app/` / navigation UI, and pure `src/core/*` non-integration modules.
+Allowed outside integrations: `react`, `react-native`, Expo Router APIs in `app/` / navigation UI, and pure `src/core/*` non-integration modules (`core/types`, `core/utils` including `isApiError`, etc.).
+
+Features import `ApiError` / `ApiSuccess` / `CursorPage` from `@/core/types` and `isApiError` from `@/core/utils` — not from the http port.
 
 ## Ports
 
 | Port | Vendor | Exposes |
 | --- | --- | --- |
-| `http` | Axios | `createApiClient`, `ApiError`, API method modules |
+| `http` | Axios | `createApiClient`, `toApiError`, API method modules |
 | `query` | TanStack Query | `QueryProvider`, `useAppQuery`, `useAppMutation`, `useAppInfiniteQuery`, key factory |
 | `form` | RHF + Zod | `useAppForm`, schema helpers, `applyServerFieldErrors` |
 | `styling` | NativeWind | host bridge / documented side effects |

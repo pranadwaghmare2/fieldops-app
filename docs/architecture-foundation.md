@@ -13,7 +13,7 @@ Approved design for the Expo app foundation (rules + scaffold). Feature screens 
 ## Dependency direction
 
 ```
-core/config|constants|theme|utils|domain
+core/config|constants|theme|utils|types
         ↓
 core/integrations/*   (http, query, form, styling, ui, image)
         ↓
@@ -36,7 +36,7 @@ src/
     config/                     # JSON + EXPO_PUBLIC_API_URL
     constants/                  # messages, status enums
     utils/                      # app-wide pure helpers
-    domain/                     # WorkOrder / User types
+    types/                      # WorkOrder / User types
     integrations/
       http/                     # Axios client + API ports
       query/                    # QueryClient + wrappers + key factory
@@ -60,7 +60,7 @@ DECISIONS.md
 
 | Principle | Meaning here |
 | --- | --- |
-| S | Screen renders; hook orchestrates; http transports; domain stays pure |
+| S | Screen renders; hook orchestrates; http transports; types stay pure |
 | O | New API behaviour lands in integrations/repos; screens stay stable |
 | L | Loading / empty / error ViewModel contracts stay consistent across screens |
 | I | Narrow ports (`useAppForm`, `workOrdersApi.list`) — not whole SDKs |
