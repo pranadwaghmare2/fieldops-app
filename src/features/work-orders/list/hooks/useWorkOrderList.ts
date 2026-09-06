@@ -2,9 +2,9 @@ import { useRouter, type Href } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
 
 import { appConfig } from '@/core/config';
-import { workOrdersApi } from '@/core/integrations/http';
 import { queryKeys, useAppInfiniteQuery } from '@/core/integrations/query';
 
+import { listWorkOrders } from '../services';
 import type {
   StatusFilter,
   UseWorkOrderListResult,
@@ -42,7 +42,7 @@ export function useWorkOrderList(): UseWorkOrderListResult {
     queryKey: queryKeys.workOrders.list(listFilters),
     initialPageParam: null as string | null,
     queryFn: ({ pageParam }) =>
-      workOrdersApi.list({
+      listWorkOrders({
         ...listFilters,
         cursor: pageParam,
       }),

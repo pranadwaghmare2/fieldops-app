@@ -1,7 +1,6 @@
-import type { WorkOrdersListParams } from '@/core/integrations/http';
 import type { CursorPage, WorkOrder } from '@/core/types';
 
-import type { StatusFilter } from '../types';
+import type { StatusFilter, WorkOrdersListParams } from '../types';
 
 /**
  * Builds GET /work-orders query params from UI filter state.

@@ -1,3 +1,4 @@
+import { Status } from '@/core/types';
 import {
   canFetchNextPage,
   flattenWorkOrderPages,
@@ -9,10 +10,12 @@ describe('toListApiParams', () => {
     expect(toListApiParams({ q: '  ', status: 'all', limit: 20 })).toEqual({
       limit: 20,
     });
-    expect(toListApiParams({ q: 'pump', status: 'open', limit: 20 })).toEqual({
+    expect(
+      toListApiParams({ q: 'pump', status: Status.Open, limit: 20 }),
+    ).toEqual({
       limit: 20,
       q: 'pump',
-      status: 'open',
+      status: Status.Open,
     });
   });
 });

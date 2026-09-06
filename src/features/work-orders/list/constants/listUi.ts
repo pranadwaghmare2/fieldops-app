@@ -1,3 +1,5 @@
+import { Status } from '@/core/types';
+
 import type { StatusFilter } from '../types';
 
 /**
@@ -13,16 +15,16 @@ export const LIST_INITIAL_NUM_TO_RENDER = 10;
 /** Status filter chip values including "all". */
 export const STATUS_FILTER_OPTIONS: readonly StatusFilter[] = [
   'all',
-  'open',
-  'in_progress',
-  'blocked',
-  'done',
-] as const;
+  Status.Open,
+  Status.InProgress,
+  Status.Blocked,
+  Status.Done,
+];
 
 export const STATUS_FILTER_LABELS: Record<StatusFilter, string> = {
   all: 'All',
-  open: 'Open',
-  in_progress: 'In progress',
-  blocked: 'Blocked',
-  done: 'Done',
+  [Status.Open]: 'Open',
+  [Status.InProgress]: 'In progress',
+  [Status.Blocked]: 'Blocked',
+  [Status.Done]: 'Done',
 };

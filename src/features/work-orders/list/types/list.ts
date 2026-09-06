@@ -1,8 +1,18 @@
-import type { Status } from '@/core/constants';
+import type { Priority, Status } from '@/core/types';
 import type { WorkOrder } from '@/core/types';
 
 /** Status chip filter including “show all”. */
 export type StatusFilter = Status | 'all';
+
+/** Query params for GET /work-orders — owned by the list feature, not http. */
+export type WorkOrdersListParams = {
+  limit?: number;
+  cursor?: string | null;
+  status?: Status;
+  priority?: Priority;
+  assigneeId?: string;
+  q?: string;
+};
 
 /**
  * Discriminated UI state for the work-order list screen.
