@@ -1,8 +1,13 @@
 /**
- * HTTP integration port — Axios lives here only.
- * ApiError / isApiError live in core/types and core/utils — not here.
+ * HTTP integration port — Axios client + thin verbs only.
+ * Feature resource URLs live in feature services. ApiError mapping lives in core/utils.
  */
-export { usersApi, workOrdersApi } from './api';
-export type { WorkOrdersListParams } from './api';
 export { createApiClient, getApiClient } from './client';
-export { toApiError } from './toApiError';
+export { compactParams } from './compactParams';
+export {
+  httpDelete,
+  httpGet,
+  httpPatch,
+  httpPost,
+  httpPut,
+} from './verbs';
