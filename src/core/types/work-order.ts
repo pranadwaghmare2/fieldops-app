@@ -1,4 +1,4 @@
-import type { Priority, Status } from '@/core/constants';
+import { Priority, Status } from './status';
 
 /** Assignee expanded on read from the mock API. */
 export type User = {

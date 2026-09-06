@@ -7,6 +7,16 @@ export enum ApiErrorKind {
   Http = 'http',
 }
 
+/**
+ * Vendor-agnostic transport failure extracted by the http adapter.
+ * Pure `toApiError` maps this — never Axios shapes.
+ */
+export type TransportFailure = {
+  message: string;
+  status?: number;
+  data?: unknown;
+};
+
 /** Successful payload wrapper used by API ports and features. */
 export type ApiSuccess<TData> = {
   data: TData;
