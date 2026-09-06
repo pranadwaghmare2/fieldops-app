@@ -1,17 +1,22 @@
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+
+import { QueryProvider } from '@/core/integrations/query';
 
 import '../global.css';
 
 /**
- * Root layout — providers land in a later task once integrations exist.
- * Keep this file free of business logic.
+ * Root layout — wires SafeArea + Query providers only.
+ * No business logic here.
  */
 export default function RootLayout() {
   return (
-    <>
-      <StatusBar style="dark" />
-      <Stack screenOptions={{ headerShown: false }} />
-    </>
+    <SafeAreaProvider>
+      <QueryProvider>
+        <StatusBar style="dark" />
+        <Stack screenOptions={{ headerShown: false }} />
+      </QueryProvider>
+    </SafeAreaProvider>
   );
 }
