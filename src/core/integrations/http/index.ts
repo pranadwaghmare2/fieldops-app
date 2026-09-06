@@ -1,8 +1,8 @@
 /**
  * HTTP integration port — Axios lives here only.
+ * ApiError / isApiError live in core/types and core/utils — not here.
  */
 export { usersApi, workOrdersApi } from './api';
-export type { WorkOrdersListParams, WorkOrdersListResult } from './api';
+export type { WorkOrdersListParams } from './api';
 export { createApiClient, getApiClient } from './client';
-export { isApiError } from './errors';
-export type { ApiError } from './errors';
+export { toApiError } from './toApiError';
