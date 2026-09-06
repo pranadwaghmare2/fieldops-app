@@ -38,8 +38,9 @@ Architecture and import boundaries live in `000-architecture.mdc`. This file cov
 
 ## DRY without speculative abstraction
 
-- Duplication across two call sites is acceptable. On the third, extract into `core/utils`, `core/domain`, or an integration port.
+- Duplication across two call sites is acceptable. On the third, extract into `core/utils`, `core/types`, or an integration port.
 - Do not invent a generic abstraction for a single use site.
+- Types placement law: see `000-architecture.mdc` (`core/types` vs feature `types/`).
 
 ## Lint & format
 
@@ -48,7 +49,7 @@ Architecture and import boundaries live in `000-architecture.mdc`. This file cov
 
 ## Documentation — exports
 
-Use full TSDoc on every exported hook, port, domain helper, and public utility: purpose, params, returns, `@remarks` for non-obvious behaviour.
+Use full TSDoc on every exported hook, port, type helper in `core/types` or feature `types/`, and public utility: purpose, params, returns, `@remarks` for non-obvious behaviour.
 
 ## Documentation — internal logic (required)
 
@@ -57,7 +58,7 @@ Document non-trivial internal functions in **both** places:
 1. **Above the function** — short block stating purpose and why this approach.
 2. **Inside the function** — inline `//` on non-obvious branches (optimistic rollback, 409 handling, cursor page merge, 422 map). Explain reasoning, not narration of obvious code.
 
-Same standard applies to **test files** that encode non-obvious setup or assert intent.
+Same standard applies to **test files** that encode non-obvious setup or assert intent. Placement of tests: see `020-testing.mdc` (`tests/` mirror, not under `src/features`).
 
 Skip noise on one-line obvious helpers.
 

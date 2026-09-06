@@ -1,4 +1,4 @@
-import type { Priority, Status } from '@/core/constants';
+import { Priority, Status } from './status';
 
 /** Assignee expanded on read from the mock API. */
 export type User = {
@@ -14,7 +14,7 @@ export type ChecklistItem = {
 };
 
 /**
- * Work order domain model — mirrors mock-api `WorkOrder`.
+ * Work order shared model — mirrors mock-api `WorkOrder`.
  * `version` must be sent back on PATCH.
  */
 export type WorkOrder = {

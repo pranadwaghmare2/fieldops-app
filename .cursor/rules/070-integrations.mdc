@@ -7,7 +7,17 @@ alwaysApply: true
 
 Whole purpose: swap or upgrade a library by editing `src/core/integrations/*` only.
 
-## Ban (features, screens, domain, utils)
+Folder layering and feature `services/` live in `000-architecture.mdc`. This file is the **integration port law** for every vendor — not an http-only doc.
+
+## Law (all ports)
+
+1. **One port per vendor family** under `src/core/integrations/<port>/`, public surface via `index.ts`.
+2. **Features never import the vendor package path** — only the port.
+3. **Adapters stay thin:** wrap SDK/client/provider; do not own product screens, feature resource URLs, or shared domain enums/models (`core/types`).
+4. **Vendor-shaped data stays inside the port.** Pure app policy (e.g. `toApiError` from `TransportFailure`, Zod schemas via form port helpers) lives in `core/utils` / `core/types` / the form port as appropriate — not scattered in features.
+5. **New library:** add dependency → extend/create port → update this ban/port table → log non-obvious choice in `DECISIONS.md` → features must not bypass the port.
+
+## Ban (features, screens, types, utils)
 
 Do **not** import by package path:
 
@@ -21,30 +31,26 @@ Do **not** import by package path:
 
 Import the matching port from `src/core/integrations/<port>` instead.
 
-Allowed outside integrations: `react`, `react-native`, Expo Router APIs in `app/` / navigation UI, and pure `src/core/*` non-integration modules.
+Allowed outside integrations: `react`, `react-native`, Expo Router in `app/` / navigation UI, and pure `src/core/*` (`types`, `utils`, `constants`, `config`, `theme`).
+
+Features import envelopes/enums from `@/core/types` and guards/mappers from `@/core/utils` — not from vendor ports.
 
 ## Ports
 
 | Port | Vendor | Exposes |
 | --- | --- | --- |
-| `http` | Axios | `createApiClient`, `ApiError`, API method modules |
+| `http` | Axios | `createApiClient`, `getApiClient`, `httpGet` / `httpPost` / `httpPatch` / `httpPut` / `httpDelete`, `compactParams` |
 | `query` | TanStack Query | `QueryProvider`, `useAppQuery`, `useAppMutation`, `useAppInfiniteQuery`, key factory |
 | `form` | RHF + Zod | `useAppForm`, schema helpers, `applyServerFieldErrors` |
 | `styling` | NativeWind | host bridge / documented side effects |
 | `ui` | fieldops-ui | `Button`, `Text`, `TextField`, `Select`, `Badge` |
 | `image` | expo-image | `AppImage` (fast cached image) |
 
-Each port folder exports through `index.ts`. TSDoc on public exports must note that vendor details stay inside the port.
+TSDoc on public exports must note that vendor details stay inside the port.
 
-## Split depth (approved)
+### Port depth
 
-- **Fat** data/http: repositories / API modules hide Axios call shapes.
-- **Thin** Query / RHF / NativeWind / image: wrappers and providers; features still express query/form intent through those wrappers.
+- **http:** thin client + verbs (compact params, return `response.data`, `throw toApiError(toTransportFailure(e))`). No feature resource modules. Axios → `TransportFailure` only here; `toApiError` in `core/utils`.
+- **query / form / styling / ui / image:** thin wrappers and providers; features express intent through those wrappers, not through the raw SDK.
 
-## Adding a library
-
-1. Add dependency.
-2. Create or extend a port under `core/integrations/`.
-3. Update this rule’s ban/port table if needed.
-4. Log non-obvious choice in `DECISIONS.md`.
-5. Features must not bypass the port.
+Feature services call ports; they do not re-implement adapter logic (see `000-architecture.mdc`).

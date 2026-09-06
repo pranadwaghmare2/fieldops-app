@@ -46,25 +46,34 @@ Not implemented yet (foundation only). Will choose an approach that **never sile
 
 ## 4. What we cut
 
-- **Cut:** Work-order list / detail / form screens in this foundation pass  
-  **Why:** Plan scoped to rules + scaffold + ports  
-  **Rejected alternative:** Building screens before architecture landed
-- **Cut:** Auth, offline, settings, EAS, dark mode, splash polish  
-  **Why:** Explicitly not required by the brief  
-  **Rejected alternative:** Spending budget on polish
+- **Cut:** Detail + create/edit form logic (stub routes only)  
+  **Why:** Ship Screen 1 end-to-end first; stubs keep FAB/row navigation honest  
+  **Rejected alternative:** Building all three screens half-done
+- **Cut:** Auth, offline, settings, EAS, dark mode, splash polish, FlashList, skeletons, RTL test dep  
+  **Why:** Explicitly not required / budget  
+  **Rejected alternative:** Spending budget on polish or a second list library
 
 ## 5. AI tools used and where
 
 - **Tool:** Cursor Agent  
-  **Where:** Foundation architecture, Cursor rules, Expo scaffold, integration stubs, docs  
-  **Not used for:** Final feature UX decisions still pending human review
+  **Where:** Foundation, list Screen 1 (http port, ViewModel, FlatList, types layout), architecture rules  
+  **Not used for:** Final 409 UX (still pending form screen)
 
 ---
 
 ## Working notes
 
 ### Feature: work-order list
-(pending)
+- Shared models + enums (`Status`, `Priority`, `HttpStatus`, envelopes) in `src/core/types/`; `constants` holds copy (`messages`) only.
+- API envelopes: `ApiSuccess` / `ApiError<TConflict>` / `ApiErrorKind` / `CursorPage` / `TransportFailure` in `core/types`; `isApiError` + pure `toApiError` (`HttpStatus` switch) in `core/utils`; http verbs + `toTransportFailure` only (no fat resource APIs in integrations).
+- List fetch: hook → `listWorkOrders` service → `httpGet('/work-orders', …)`.
+- Local agent specs/plans under `docs/superpowers/` are gitignored.
+- Debounce in dedicated `useDebouncedValue`; search draft isolated in `WorkOrderSearchBar` so filter chips + FlatList skip keystroke re-renders.
+- FlatList knobs + `getItemLayout` + memo rows / `useCallback` handlers; first-load spinner (not skeleton).
+- Stub routes `/work-orders/[id]` and `/work-orders/new` (scope B).
+- Risk tests: `toApiError`, `isApiError`, `compactParams`, `toListApiParams`, page flatten, `canFetchNextPage` under top-level `tests/`. RTL deferred.
+- Physical device: `EXPO_PUBLIC_API_URL` must be LAN IP (not localhost). List error UI always shows `ApiError.message` (backend body or transport text), never `kind`.
+- Search: draft debounced 300ms before query key change; body shows `fetching` spinner during debounce and filter/search fetch; pull-refresh stays RefreshControl-only; load-more footer unchanged. Android: circular FAB, taller rows, `removeClippedSubviews` off.
 
 ### Feature: work-order detail
 (pending)

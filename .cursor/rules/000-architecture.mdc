@@ -25,11 +25,11 @@ src/
   core/
     theme/                      # FieldOps tokens ONLY (match UI library preset)
     config/                     # JSON timeouts/limits + env loader
-    constants/                  # messages, status/priority enums
-    utils/                      # app-wide pure helpers (date, …)
-    domain/                     # pure types and mappers — no I/O
+    constants/                  # copy + static config values (not enums/types)
+    utils/                      # app-wide pure helpers (date, isApiError, toApiError, …)
+    types/                      # shared enums, models, envelopes — no I/O
     integrations/
-      http/                     # Axios + API error normalize + API ports
+      http/                     # Axios client + thin httpGet/Post/… verbs only
       query/                    # QueryClient provider + wrappers + key factory
       form/                     # RHF + Zod adapters
       styling/                  # NativeWind host bridge
@@ -38,6 +38,8 @@ src/
   features/
     work-orders/
       list|detail|form/
+        types/                  # feature-local types only
+        services/               # resource paths + http* calls (no error/success map)
         hooks/                  # ViewModels
         components/
         screens/                # dumb UI
@@ -49,9 +51,11 @@ mock-api/                       # do not modify server.js
 ### Dependency direction (enforced on every change)
 
 ```
-core/theme|config|constants|utils|domain
+core/theme|config|constants|utils|types
                 ↓
         core/integrations/*
+                ↓
+       features/*/services
                 ↓
           features/*/hooks
                 ↓
@@ -64,6 +68,7 @@ core/theme|config|constants|utils|domain
 - `app/` imports screens (or thin placeholders) and providers from integrations — never Axios/Query/RHF/Zod package paths.
 - Features never import third-party packages except `react` / `react-native` / `expo-router` navigation primitives as needed for UI. All other vendors enter only through `core/integrations/`.
 - Changing Axios, Query, RHF, Zod, NativeWind, or `expo-image` edits `core/integrations/` only.
+- Integrations = vendor adapters only (see `070-integrations.mdc`). Feature resource URLs live in `features/*/services`. Hooks call services; services call port APIs and pass through results. Pure error normalization (`toApiError`) lives in `core/utils`; vendor-shaped failure extraction stays inside the matching port.
 
 ---
 
@@ -81,22 +86,22 @@ core/theme|config|constants|utils|domain
 
 ---
 
-### Layer: `core/config` | `constants` | `utils` | `domain`
+### Layer: `core/config` | `constants` | `utils` | `types`
 
 - **config** — timeouts, debounce ms, page size (JSON + typed loaders); `EXPO_PUBLIC_API_URL` via env helper.
-- **constants** — user-facing copy strings, status/priority enums aligned with mock API.
-- **utils** — app-wide pure helpers. Feature-only helpers stay under that feature.
-- **domain** — WorkOrder/User types and pure mappers. No React, no I/O.
+- **constants** — user-facing copy (`messages`) and other static non-type values. **Not** enums, interfaces, or domain models.
+- **utils** — app-wide pure helpers (dates, `isApiError`, `toApiError` with `HttpStatus` switch, …). Feature-only helpers stay under that feature.
+- **types** — shared enums (`Status`, `Priority`, `HttpStatus`, `ApiErrorKind`), models (`WorkOrder`, `User`), envelopes (`ApiSuccess`, `ApiError`, `CursorPage`, `TransportFailure`), and later mappers. No React, no I/O. Import as `@/core/types`.
 
 ---
 
 ### Layer: `core/integrations`
 
-**Responsibility:** Isolate every third-party dependency behind adapters/providers.
+**Responsibility:** Isolate every third-party dependency behind a narrow adapter/provider port. One vendor family per folder. Swap the library by editing that port only.
 
-**Ports:** `http`, `query`, `form`, `styling`, `ui`, `image`.
+**Ports:** `http`, `query`, `form`, `styling`, `ui`, `image` — details and ban table in `070-integrations.mdc` (do not duplicate the full table here).
 
-**Must not:** implement product screens; be imported around via deep vendor paths from features.
+**Must not:** implement product screens; own feature resource URLs or feature params types; own shared domain enums/models (those are `core/types`); put pure app error policy in a vendor file when it can live in `core/utils`.
 
 **SOLID:** S — one adapter family per concern. O — new vendor behaviour as new/extended port. D — features depend on ports; integrations implement with vendors.
 
@@ -108,11 +113,15 @@ core/theme|config|constants|utils|domain
 
 **Responsibility:** Feature slices with hook ViewModels and dumb screens/components.
 
-**Per-area folders:** `hooks/`, `components/`, `screens/`, optional local `constants/`, `utils/`.
+**Per-area folders:** `types/`, `services/`, `hooks/`, `components/`, `screens/`, optional local `constants/`, `utils/`.
+
+- Feature `types/` holds ViewModel return unions, filter unions, list params, and exported component prop types. Do not leave those in hook files as the only home.
+- Feature `services/` own resource paths and call http verbs; return typed success data; do not catch/map errors or reshape envelopes.
+- Shared models belong in `core/types`, not under a feature `types/` folder.
 
 **Must not:** import Axios, `@tanstack/*`, `react-hook-form`, `zod`, `nativewind`, `@pranadwaghmare2/fieldops-ui`, `expo-image` by package path.
 
-**SOLID:** S — screen = render; hook = orchestration. I — narrow ViewModel return shapes. D — depend on integration ports.
+**SOLID:** S — screen = render; hook = orchestration; service = resource call. I — narrow ViewModel return shapes. D — hooks depend on services + query port; services depend on http verbs.
 
 ---
 
@@ -128,5 +137,10 @@ core/theme|config|constants|utils|domain
 - Second colour theme or dark mode system.
 - Collapsing this repo with `fieldops-ui` into a monorepo as the distribution model.
 - Putting adapter code inside `features/*/`.
+- Putting enums / shared interfaces in `core/constants` (they belong in `core/types`; constants are copy/config values).
+- Putting feature resource URLs or fat API modules inside `core/integrations/*`.
+- Feature UI state types living only inside hooks; shared models living under a feature `types/` folder.
+- Hard-coding resource models (e.g. `WorkOrder`) on shared `ApiError`; owning `ApiError` types inside an integration port.
+- Colocating `*.test.ts(x)` under `src/` (tests belong in top-level `tests/` — see `020-testing.mdc`).
 - Logic-heavy `app/*.tsx` route files.
 - Documenting architecture by name-dropping “clean” / “SOLID” without following the folder contracts above.

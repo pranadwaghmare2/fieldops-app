@@ -31,8 +31,9 @@ Trade-offs: root `DECISIONS.md` (see `.cursor/rules/030-decisions.mdc`).
 ## Architecture (short)
 
 ```
-core/theme|config|constants|utils|domain
+core/theme|config|constants|utils|types
         → core/integrations/*
+        → features/*/services
         → features/*/hooks
         → features/*/components|screens
         → app/ (Expo Router shells)
