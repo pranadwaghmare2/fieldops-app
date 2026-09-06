@@ -10,7 +10,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { messages } from '@/core/constants';
-import { Button, Text } from '@/core/integrations/ui';
+import { Button, ScreenShell, Text } from '@/core/integrations/ui';
 import type { WorkOrder } from '@/core/types';
 import { colours, spacing } from '@/core/theme';
 
@@ -28,7 +28,7 @@ import {
   LIST_INITIAL_NUM_TO_RENDER,
   LIST_MAX_TO_RENDER_PER_BATCH,
   LIST_WINDOW_SIZE,
-  ROW_HEIGHT,
+  ROW_STRIDE,
 } from '../constants/listUi';
 import { useWorkOrderList } from '../hooks/useWorkOrderList';
 
@@ -55,10 +55,11 @@ export function WorkOrderListScreen() {
 
   const keyExtractor = useCallback((item: WorkOrder) => item.id, []);
 
+  // Fixed stride keeps scroll measurement cheap with surface cards + gap.
   const getItemLayout = useCallback(
     (_: ArrayLike<WorkOrder> | null | undefined, index: number) => ({
-      length: ROW_HEIGHT,
-      offset: ROW_HEIGHT * index,
+      length: ROW_STRIDE,
+      offset: ROW_STRIDE * index,
       index,
     }),
     [],
@@ -78,57 +79,60 @@ export function WorkOrderListScreen() {
 
   return (
     <SafeAreaView style={styles.safe} edges={['top', 'left', 'right']}>
-      <View style={styles.header}>
-        <Text role="title">Work orders</Text>
-        <View style={styles.block}>
-          <WorkOrderSearchBar
-            resetNonce={searchResetNonce}
-            onQueryChange={onQueryChange}
-            onSearchPendingChange={onSearchPendingChange}
-          />
+      <ScreenShell>
+        <View style={styles.header}>
+          <Text role="title">Work orders</Text>
+          <View style={styles.block}>
+            <WorkOrderSearchBar
+              resetNonce={searchResetNonce}
+              onQueryChange={onQueryChange}
+              onSearchPendingChange={onSearchPendingChange}
+            />
+          </View>
+          <View style={styles.block}>
+            <WorkOrderStatusFilter
+              value={statusFilter}
+              onChange={onStatusChange}
+            />
+          </View>
         </View>
-        <View style={styles.block}>
-          <WorkOrderStatusFilter
-            value={statusFilter}
-            onChange={onStatusChange}
-          />
-        </View>
-      </View>
 
-      <View style={styles.body}>
-        {showBodySpinner ? (
-          <ListLoadingState />
-        ) : ui.status === 'error' ? (
-          <ListErrorState message={ui.message} onRetry={onRetry} />
-        ) : ui.status === 'empty' ? (
-          <ListEmptyState message={messages.listEmpty} />
-        ) : ui.status === 'emptyFiltered' ? (
-          <ListFilteredEmptyState onClearFilters={onClearFilters} />
-        ) : (
-          <FlatList
-            data={ui.items}
-            keyExtractor={keyExtractor}
-            renderItem={renderItem}
-            getItemLayout={getItemLayout}
-            onEndReached={onEndReached}
-            onEndReachedThreshold={0.4}
-            ListFooterComponent={listFooter}
-            refreshControl={
-              <RefreshControl
-                refreshing={isRefreshing}
-                onRefresh={onRefresh}
-                tintColor={colours.primary}
-                colors={[colours.primary]}
-              />
-            }
-            windowSize={LIST_WINDOW_SIZE}
-            maxToRenderPerBatch={LIST_MAX_TO_RENDER_PER_BATCH}
-            initialNumToRender={LIST_INITIAL_NUM_TO_RENDER}
-            removeClippedSubviews={Platform.OS !== 'android'}
-            contentContainerStyle={styles.listContent}
-          />
-        )}
-      </View>
+        <View style={styles.body}>
+          {showBodySpinner ? (
+            <ListLoadingState />
+          ) : ui.status === 'error' ? (
+            <ListErrorState message={ui.message} onRetry={onRetry} />
+          ) : ui.status === 'empty' ? (
+            <ListEmptyState message={messages.listEmpty} />
+          ) : ui.status === 'emptyFiltered' ? (
+            <ListFilteredEmptyState onClearFilters={onClearFilters} />
+          ) : (
+            <FlatList
+              data={ui.items}
+              keyExtractor={keyExtractor}
+              renderItem={renderItem}
+              getItemLayout={getItemLayout}
+              onEndReached={onEndReached}
+              onEndReachedThreshold={0.4}
+              ListFooterComponent={listFooter}
+              refreshControl={
+                <RefreshControl
+                  refreshing={isRefreshing}
+                  onRefresh={onRefresh}
+                  tintColor={colours.primary}
+                  colors={[colours.primary]}
+                />
+              }
+              windowSize={LIST_WINDOW_SIZE}
+              maxToRenderPerBatch={LIST_MAX_TO_RENDER_PER_BATCH}
+              initialNumToRender={LIST_INITIAL_NUM_TO_RENDER}
+              removeClippedSubviews={Platform.OS !== 'android'}
+              keyboardShouldPersistTaps="handled"
+              contentContainerStyle={styles.listContent}
+            />
+          )}
+        </View>
+      </ScreenShell>
 
       <View style={styles.fab} pointerEvents="box-none">
         <Button
@@ -153,7 +157,6 @@ const styles = StyleSheet.create({
     backgroundColor: colours.bg,
   },
   header: {
-    paddingHorizontal: spacing[4],
     paddingTop: spacing[2],
     gap: spacing[4],
   },
@@ -162,7 +165,6 @@ const styles = StyleSheet.create({
   },
   body: {
     flex: 1,
-    paddingHorizontal: spacing[4],
     marginTop: spacing[4],
   },
   listContent: {

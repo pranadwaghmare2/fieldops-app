@@ -3,8 +3,7 @@ import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { QueryProvider } from '@/core/integrations/query';
-
-import '../global.css';
+import '@/core/integrations/styling';
 
 /**
  * Root layout — wires SafeArea + Query providers only.

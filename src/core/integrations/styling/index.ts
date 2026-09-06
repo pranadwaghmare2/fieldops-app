@@ -1,5 +1,6 @@
 /**
- * Styling integration — NativeWind host wiring lives in root babel/metro/tailwind.
- * Import `global.css` from `app/_layout.tsx` (side effect). Features do not import NativeWind.
+ * Styling integration — NativeWind host entry.
+ * Features never import `nativewind`. App root imports this port once.
+ * `global.css` lives at repo root (four levels up from this file).
  */
-export {};
+import '../../../../global.css';
