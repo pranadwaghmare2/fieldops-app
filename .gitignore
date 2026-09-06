@@ -46,3 +46,6 @@ yarn-error.*
 .DS_Store
 
 docs/temp/
+
+# Local agent specs/plans (not for remote review artifact set)
+docs/superpowers/
