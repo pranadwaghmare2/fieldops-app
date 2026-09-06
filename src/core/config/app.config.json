@@ -1,0 +1,5 @@
+{
+  "httpTimeoutMs": 15000,
+  "searchDebounceMs": 300,
+  "pageSize": 20
+}
