@@ -15,7 +15,7 @@ No coverage percentage target. Test the risk surface that protects users and arc
 4. **Form Zod** — urgent priority requires due within 48 hours.
 5. **422 mapping** — server `errors` map lands on the correct fields via form adapter.
 6. **409 conflict** — user never silently loses typed input.
-7. **Http / envelopes** — `toApiError` normalization for 422 / 409 / retryable 500; `isApiError` util guard.
+7. **Envelopes / errors** — utils `toApiError` (`HttpStatus` switch for 422 / 409 / 500); `isApiError` guard; http `toTransportFailure` stays Axios-only inside the port.
 
 ## Explicitly skip
 

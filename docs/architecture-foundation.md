@@ -15,7 +15,9 @@ Approved design for the Expo app foundation (rules + scaffold). Feature screens 
 ```
 core/config|constants|theme|utils|types
         ↓
-core/integrations/*   (http, query, form, styling, ui, image)
+core/integrations/*   (http verbs, query, form, styling, ui, image)
+        ↓
+features/*/services   (resource paths → httpGet/…)
         ↓
 features/*/hooks      (ViewModels)
         ↓
@@ -24,7 +26,7 @@ features/*/components + screens
 app/                  (Expo Router shells — import screens only)
 ```
 
-Inner layers never import outer layers. Screens never import Axios, TanStack Query, RHF, Zod, NativeWind, `expo-image`, or `fieldops-ui` by package path.
+Inner layers never import outer layers. Screens never import Axios, TanStack Query, RHF, Zod, NativeWind, `expo-image`, or `fieldops-ui` by package path. Layering law: `.cursor/rules/000-architecture.mdc`.
 
 ## Folder layout
 
@@ -34,11 +36,11 @@ src/
   core/
     theme/                      # FieldOps tokens (match UI preset)
     config/                     # JSON + EXPO_PUBLIC_API_URL
-    constants/                  # messages, status enums
-    utils/                      # app-wide pure helpers
-    types/                      # WorkOrder / User types
+    constants/                  # copy + static config values (not enums)
+    utils/                      # app-wide pure helpers (incl. toApiError)
+    types/                      # enums, WorkOrder / User / envelopes
     integrations/
-      http/                     # Axios client + API ports
+      http/                     # Axios client + thin verbs only
       query/                    # QueryClient + wrappers + key factory
       form/                     # RHF + Zod adapters
       styling/                  # NativeWind host bridge
@@ -47,6 +49,8 @@ src/
   features/
     work-orders/
       list|detail|form/
+        types/
+        services/               # resource paths → http verbs
         hooks/
         components/
         screens/
@@ -63,7 +67,7 @@ DECISIONS.md
 | S | Screen renders; hook orchestrates; http transports; types stay pure |
 | O | New API behaviour lands in integrations/repos; screens stay stable |
 | L | Loading / empty / error ViewModel contracts stay consistent across screens |
-| I | Narrow ports (`useAppForm`, `workOrdersApi.list`) — not whole SDKs |
+| I | Narrow ports (`useAppForm`, `httpGet`) and feature services — not whole SDKs |
 | D | Features depend on ports; integrations implement with vendors |
 
 ## Theme (`core/theme`)
@@ -74,7 +78,7 @@ Tailwind host uses `nativewind/preset` + `@pranadwaghmare2/fieldops-ui/preset`. 
 
 ## Integrations
 
-- **http** — Axios instance from `EXPO_PUBLIC_API_URL`; normalize 422 / 409 / 500 into `ApiError`; fat API methods later.
+- **http** — Axios instance from `EXPO_PUBLIC_API_URL`; thin `httpGet`/… verbs; Axios → `TransportFailure` then utils `toApiError`. Feature URLs live in feature services (see `.cursor/rules/000-architecture.mdc`).
 - **query** — Provider + `useAppQuery` / `useAppMutation` / `useAppInfiniteQuery` + query key factory.
 - **form** — `useAppForm`, Zod helpers, `applyServerFieldErrors` for 422 maps.
 - **styling** — NativeWind host wiring.

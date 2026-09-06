@@ -56,6 +56,7 @@ Before calling a task done: typecheck and relevant tests must pass once those sc
    - pure helpers → `core/utils` or feature `utils/`
    - types/mappers → `core/types` (shared) or `features/.../types` (feature-local)
    - third-party wrappers → `core/integrations/*`
+   - feature resource calls → `features/.../services/`
    - ViewModels → `features/<feature>/<area>/hooks/`
    - UI → `features/.../components` or `screens`
    - routes → thin `app/` files only

@@ -64,13 +64,14 @@ Not implemented yet (foundation only). Will choose an approach that **never sile
 ## Working notes
 
 ### Feature: work-order list
-- Shared models in `src/core/types/` (replaced `core/domain`); list UI/ViewModel types in `list/types/`.
-- API envelopes: `ApiSuccess` / `ApiError<TConflict>` / `ApiErrorKind` / `CursorPage` in `core/types`; `isApiError` in `core/utils`; `toApiError` only in http (no WorkOrder on base error).
+- Shared models + enums (`Status`, `Priority`, `HttpStatus`, envelopes) in `src/core/types/`; `constants` holds copy (`messages`) only.
+- API envelopes: `ApiSuccess` / `ApiError<TConflict>` / `ApiErrorKind` / `CursorPage` / `TransportFailure` in `core/types`; `isApiError` + pure `toApiError` (`HttpStatus` switch) in `core/utils`; http verbs + `toTransportFailure` only (no fat resource APIs in integrations).
+- List fetch: hook → `listWorkOrders` service → `httpGet('/work-orders', …)`.
 - Local agent specs/plans under `docs/superpowers/` are gitignored.
 - Debounce in dedicated `useDebouncedValue`; search draft isolated in `WorkOrderSearchBar` so filter chips + FlatList skip keystroke re-renders.
 - FlatList knobs + `getItemLayout` + memo rows / `useCallback` handlers; first-load spinner (not skeleton).
 - Stub routes `/work-orders/[id]` and `/work-orders/new` (scope B).
-- Risk tests: `toApiError`, `isApiError`, `toListApiParams`, page flatten, `canFetchNextPage` under top-level `tests/`. RTL deferred.
+- Risk tests: `toApiError`, `isApiError`, `compactParams`, `toListApiParams`, page flatten, `canFetchNextPage` under top-level `tests/`. RTL deferred.
 - Physical device: `EXPO_PUBLIC_API_URL` must be LAN IP (not localhost). List error UI always shows `ApiError.message` (backend body or transport text), never `kind`.
 - Search: draft debounced 300ms before query key change; body shows `fetching` spinner during debounce and filter/search fetch; pull-refresh stays RefreshControl-only; load-more footer unchanged. Android: circular FAB, taller rows, `removeClippedSubviews` off.
 
