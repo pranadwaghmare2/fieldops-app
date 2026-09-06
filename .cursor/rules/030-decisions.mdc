@@ -1,0 +1,74 @@
+---
+description: Single DECISIONS.md — grader sections plus working feature notes
+alwaysApply: true
+---
+
+# Decisions log — fieldops-app
+
+Root `DECISIONS.md` is the review artifact. Commit bodies may point at it; they do not replace it.
+
+Law: this file. One document only — no `docs/decisions/` sprawl.
+
+## When to write
+
+Same turn as the choice. Do not defer to handoff.
+
+| Event | Section |
+| --- | --- |
+| Non-trivial trade-off you would defend in review | §1 Five decisions to defend |
+| NativeWind + fieldops-ui package boundary | §2 NativeWind / UI package boundary |
+| 409 conflict UX | §3 409 conflict behaviour |
+| Deliberate non-build | §4 What we cut |
+| First use of an AI tool in a work stream | §5 AI tools used and where |
+| Per-feature brainstorm while building | Working notes (below divider) |
+
+## Handoff shape (keep tight / ~one page)
+
+### §1 — Five decisions to defend
+
+Keep **exactly five** entries at handoff. Overflow goes under working notes, then prune.
+
+```markdown
+### <short title>
+- **Why:** problem or constraint
+- **What:** option chosen
+- **Rejected:** option not taken, and why rejected
+- **How:** paths, ports, commands
+```
+
+### §2 — NativeWind / UI package boundary
+
+- **Problem:** what breaks if host wiring or preset is wrong
+- **Solution:** npm package, preset, content scan, peers
+- **Cost:** concrete trade-offs
+
+### §3 — 409 conflict
+
+What the technician sees; how typed input is preserved; why that choice.
+
+### §4 — What we cut
+
+```markdown
+- **Cut:** specific thing not built
+- **Why:** reason
+- **Rejected alternative:** what was almost built instead
+```
+
+### §5 — AI tools
+
+```markdown
+- **Tool:** name
+- **Where:** what it touched
+- **Not used for:** optional honesty
+```
+
+## Working notes (same file, below divider)
+
+```markdown
+---
+## Working notes
+### Feature: work-order list
+…
+```
+
+Prune or fold into grader sections before final handoff. Do not leave `<!-- replace -->` stubs at submit time.

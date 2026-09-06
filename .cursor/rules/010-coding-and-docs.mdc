@@ -1,0 +1,66 @@
+---
+description: TypeScript, React Native, TSDoc, and performance standards for fieldops-app
+alwaysApply: true
+---
+
+# Coding & documentation — fieldops-app
+
+Architecture and import boundaries live in `000-architecture.mdc`. This file covers how code is written and documented inside those layers.
+
+## TypeScript
+
+- `strict: true` in tsconfig. No `any` — use `unknown` and narrow, or generics.
+- No non-null assertions (`!`) outside test files.
+- Prefer discriminated unions for UI state machines:
+  `{ status: 'idle' } | { status: 'loading' } | { status: 'empty' } | { status: 'error'; error: Error } | { status: 'success'; data: T }`
+  Empty and error must remain distinguishable.
+
+## React / React Native
+
+- Function components only.
+- Screens are presentational: call one ViewModel hook; render from its return value.
+- No side effects in render. `useEffect` synchronizes with external systems; derived values are computed inline or with `useMemo` when justified.
+- Accessibility props on interactive UI (`accessibilityRole`, `accessibilityLabel`, `accessibilityState`).
+- Boolean props are predicates: `isDisabled`, `isLoading`.
+- Prefer named exports. File name matches the primary export.
+
+## Performance (guardrails — decide concrete approach at feature time)
+
+- Keep scroll and typing jank-free; avoid heavy work on the JS thread during list interaction.
+- Virtualize long lists (`FlatList` / FlashList when chosen). Append cursor pages; do not rebuild the whole list from scratch on every keystroke if avoidable.
+- Prefer **server query params** (`q`, `status`) for filter/search over filtering a huge in-memory copy as the primary model.
+- Stable `keyExtractor` ids — avoid index keys for paginated data.
+- `React.memo` on row/item components when props are stable; `useCallback` for `renderItem` / handlers passed to memo children; `useMemo` for expensive or referential derived data. **Do not** blanket-memo everything — use when list or profiler shows churn.
+- Keep filter/search state in the ViewModel; list data from Query cache. Do not duplicate the server list into parallel `useState` arrays just to filter unless deliberate and logged in `DECISIONS.md`.
+- Debounce search input before changing query keys; guard infinite `fetchNextPage` against double fetch.
+- Isolate form fields so typing one field does not re-render the entire screen tree when avoidable.
+- When animation is added: prefer `useNativeDriver: true` where supported; Reanimated worklets for continuous/gesture animation. Do not animate by remounting large lists on the JS thread.
+
+## DRY without speculative abstraction
+
+- Duplication across two call sites is acceptable. On the third, extract into `core/utils`, `core/domain`, or an integration port.
+- Do not invent a generic abstraction for a single use site.
+
+## Lint & format
+
+- ESLint with type-aware TypeScript rules and `eslint-plugin-react-hooks` when configured.
+- Do not silence lint with `eslint-disable` as a first resort.
+
+## Documentation — exports
+
+Use full TSDoc on every exported hook, port, domain helper, and public utility: purpose, params, returns, `@remarks` for non-obvious behaviour.
+
+## Documentation — internal logic (required)
+
+Document non-trivial internal functions in **both** places:
+
+1. **Above the function** — short block stating purpose and why this approach.
+2. **Inside the function** — inline `//` on non-obvious branches (optimistic rollback, 409 handling, cursor page merge, 422 map). Explain reasoning, not narration of obvious code.
+
+Same standard applies to **test files** that encode non-obvious setup or assert intent.
+
+Skip noise on one-line obvious helpers.
+
+## Decisions
+
+When choosing list virtualization, debounce strategy, 409 UX, or integration shapes, update `DECISIONS.md` in the same turn per `030-decisions.mdc`.

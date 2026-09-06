@@ -1,0 +1,39 @@
+---
+description: Testing minimum bar for fieldops-app — risk surface, not coverage theatre
+alwaysApply: true
+---
+
+# Testing — fieldops-app
+
+No coverage percentage target. Test the risk surface that protects users and architecture. Do not invent tests to pad numbers.
+
+## Risk surface (must cover when features land)
+
+1. **Cursor list** — page merge and stop when `nextCursor` is null.
+2. **Search / filter** — what is sent to the API and when (debounce behaviour).
+3. **Status mutation** — optimistic update, 500 rollback, list cache stays coherent with detail.
+4. **Form Zod** — urgent priority requires due within 48 hours.
+5. **422 mapping** — server `errors` map lands on the correct fields via form adapter.
+6. **409 conflict** — user never silently loses typed input.
+7. **Http port** — `ApiError` normalization for 422 / 409 / retryable 500.
+
+## Explicitly skip
+
+- Full-tree snapshot tests.
+- Re-testing NativeWind / Tailwind class generation.
+- Visual / pixel regression (pixel fidelity is not the grading bar).
+- Asserting that a `<View>` renders a `<View>`.
+
+If a whole class of tests is deliberately skipped, log it under `DECISIONS.md` cuts per `030-decisions.mdc`.
+
+## Tooling & placement
+
+- Jest + `@testing-library/react-native` for UI behaviour.
+- Query by role, label, or text — never by internal className strings.
+- Colocate `*.test.ts(x)` next to the unit under test.
+- Prefer testing through public ports and ViewModel hooks. Do not mock the unit under test’s own internals lightly.
+- Pure domain / utils get direct unit tests without rendering when behaviour is non-trivial.
+
+## Failure signals (fix design, not the test)
+
+- Need to `jest.mock` Axios or Query inside a feature test because the feature imported the vendor directly → move the import behind `core/integrations`.

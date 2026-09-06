@@ -1,0 +1,43 @@
+---
+description: React Hook Form + Zod adapters — validation, 422, 409, keyboard
+alwaysApply: true
+---
+
+# Forms — fieldops-app
+
+All RHF / Zod usage goes through `core/integrations/form`. Features never import `react-hook-form`, `@hookform/resolvers`, or `zod` by package path.
+
+## Required stack
+
+- React Hook Form + Zod (brief). Create and edit share one form mode.
+- UI fields from `core/integrations/ui` (`TextField`, `Select`, `Button`, …).
+
+## Client rules (mirror mock-api)
+
+- `title`: 8–120 characters
+- `site`: required, non-empty
+- `priority`: `low` | `medium` | `high` | `urgent`
+- `dueAt`: valid date; if `priority` is `urgent`, due within 48 hours (cross-field)
+- `checklist`: max 10 items; every item needs a non-empty label
+
+Do **not** mirror undocumented server-only rules (e.g. title containing “asbestos”). Those arrive as 422 and map onto fields.
+
+## Adapters
+
+- `useAppForm` — typed RHF wrapper used by feature ViewModels.
+- Schema builders / `z` re-exported from the form port.
+- `applyServerFieldErrors(form, errorsMap)` — 422 `{ field: message }` → per-field `setError`. No toast-only path for field errors.
+- Submit: disable control + loading while in flight; block double submit.
+- Edit PATCH must send the loaded `version`.
+
+## 409 conflict
+
+Stale `version` returns 409 with `current` work order. Choose UX in `DECISIONS.md`. Hard rule: **never silently discard** what the technician typed.
+
+## Keyboard
+
+Focused field stays visible. Test checklist fields near the bottom of the form (KeyboardAvoidingView / scroll patterns as chosen at feature time).
+
+## Accessibility
+
+Labels and error text associated with inputs; disabled/loading states exposed via accessibility props.

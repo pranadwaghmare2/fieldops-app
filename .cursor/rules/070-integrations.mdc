@@ -1,0 +1,50 @@
+---
+description: Third-party isolation — http, query, form, styling, ui, image ports
+alwaysApply: true
+---
+
+# Integrations — fieldops-app
+
+Whole purpose: swap or upgrade a library by editing `src/core/integrations/*` only.
+
+## Ban (features, screens, domain, utils)
+
+Do **not** import by package path:
+
+- `axios`
+- `@tanstack/react-query` (or related)
+- `react-hook-form`, `@hookform/resolvers`
+- `zod`
+- `nativewind`
+- `@pranadwaghmare2/fieldops-ui`
+- `expo-image`
+
+Import the matching port from `src/core/integrations/<port>` instead.
+
+Allowed outside integrations: `react`, `react-native`, Expo Router APIs in `app/` / navigation UI, and pure `src/core/*` non-integration modules.
+
+## Ports
+
+| Port | Vendor | Exposes |
+| --- | --- | --- |
+| `http` | Axios | `createApiClient`, `ApiError`, API method modules |
+| `query` | TanStack Query | `QueryProvider`, `useAppQuery`, `useAppMutation`, `useAppInfiniteQuery`, key factory |
+| `form` | RHF + Zod | `useAppForm`, schema helpers, `applyServerFieldErrors` |
+| `styling` | NativeWind | host bridge / documented side effects |
+| `ui` | fieldops-ui | `Button`, `Text`, `TextField`, `Select`, `Badge` |
+| `image` | expo-image | `AppImage` (fast cached image) |
+
+Each port folder exports through `index.ts`. TSDoc on public exports must note that vendor details stay inside the port.
+
+## Split depth (approved)
+
+- **Fat** data/http: repositories / API modules hide Axios call shapes.
+- **Thin** Query / RHF / NativeWind / image: wrappers and providers; features still express query/form intent through those wrappers.
+
+## Adding a library
+
+1. Add dependency.
+2. Create or extend a port under `core/integrations/`.
+3. Update this rule’s ban/port table if needed.
+4. Log non-obvious choice in `DECISIONS.md`.
+5. Features must not bypass the port.

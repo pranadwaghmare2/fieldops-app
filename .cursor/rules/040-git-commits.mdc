@@ -1,0 +1,41 @@
+---
+description: Git and Conventional Commit rules for the fieldops-app Expo repo
+alwaysApply: true
+---
+
+# Git & commits — fieldops-app
+
+This repository is the Expo consuming app only. Commit messages refer to app concerns — not library publish internals.
+
+## Format — Conventional Commits
+
+`type(scope): summary` — imperative mood, no trailing period, ≤72 character summary line.
+
+Types: `feat`, `fix`, `refactor`, `test`, `docs`, `chore`, `build`, `ci`, `style`, `perf`.
+
+Scopes (examples):
+- `feat(core): add theme tokens`
+- `feat(integrations): add query provider port`
+- `feat(work-orders): add list ViewModel`
+- `feat(router): wire QueryProvider`
+- `docs(decisions): record 409 conflict UX`
+- `chore(cursor): add architecture rules`
+
+Body (optional) explains **why**. Point lasting trade-offs at `DECISIONS.md`.
+
+Breaking changes use `!` when intentional.
+
+## Granularity
+
+- One logical change per commit. Revertable without breaking the build.
+- Sequence: scaffold → theme/config → integrations → router/providers → feature slices → tests → docs.
+- Config / dependency / lockfile changes get their own `chore:` / `build:` commit when heavy — especially new vendors behind integrations.
+- Never leave `wip` or `fixes` as the final message of finished work.
+- Formatting-only changes are their own `style:` commit.
+- No secrets, committed `.env` files, or machine-local ports.
+
+## History hygiene
+
+- Prefer small commits that show dependency isolation (integration adapter before features call it).
+- After a shared or reviewed push, do not rewrite history. Local rebase before final handoff is fine for a solo submission.
+- Commit and push only when the human asks — except an explicit foundation/implementation plan that requires commit+push per layer.

@@ -1,0 +1,32 @@
+---
+description: TanStack Query practices — keys, infinite cursor, optimistic updates, cache coherence
+alwaysApply: true
+---
+
+# TanStack Query — fieldops-app
+
+All Query usage goes through `core/integrations/query`. Features never import `@tanstack/react-query` directly.
+
+## Industry defaults (apply unless DECISIONS.md says otherwise)
+
+- One `QueryClient` provided at the root layout via `QueryProvider`.
+- **Query key factory** in the query port (e.g. `workOrdersKeys.list(filters)`, `.detail(id)`). No ad-hoc string keys in features.
+- Sensible `staleTime` for list/detail; avoid refetch-on-every-keystroke (debounce search in the ViewModel).
+- List endpoint is **cursor** paginated with **no total**. Use infinite query; stop when `nextCursor` is null.
+- Mutations that change a work order must keep **detail and list** coherent (invalidate and/or optimistic update both as appropriate). The list the user came from must not lie after a status change.
+
+## Optimistic status writes
+
+- Status endpoint fails ~20% with 500 (chaos). Optimistic UI shows the new status immediately.
+- `onMutate`: snapshot previous cache; apply optimistic patch.
+- On error: roll back snapshot; surface a clear failure; decide retry UX in `DECISIONS.md`.
+- On success: sync server payload / version into cache.
+
+## Errors
+
+- Map transport failures through the http `ApiError` port before UI messaging.
+- Distinguish empty list, filtered empty, and request error in the ViewModel — never one generic blank screen.
+
+## Testing
+
+- Cover page merge, rollback, and cache coherence for risky mutations (see `020-testing.mdc`).

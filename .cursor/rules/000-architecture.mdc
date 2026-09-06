@@ -1,0 +1,132 @@
+---
+description: Folder layers, dependency direction, SOLID, and theme contracts for fieldops-app
+alwaysApply: true
+---
+
+# Architecture — fieldops-app
+
+This repository is the Expo FieldOps consuming app. Requirements define *what* ships.
+These rules define *how* the codebase stays stable when dependencies or APIs change.
+
+Record irreversible trade-offs in root `DECISIONS.md` per `030-decisions.mdc`.
+
+## Product boundaries
+
+- Expo SDK 57. Consumes `@pranadwaghmare2/fieldops-ui` as an npm package — not a relative import, not a monorepo.
+- Three screens eventually: work-order list, detail, create/edit. Foundation may ship empty feature folders.
+- Required libs (via integrations only): TanStack Query, Axios, React Hook Form, Zod, NativeWind.
+- No auth, offline sync, settings, EAS, dark mode, or store publishing unless requirements change.
+
+## Folder structure
+
+```
+app/                            # Expo Router shells only — no business logic
+src/
+  core/
+    theme/                      # FieldOps tokens ONLY (match UI library preset)
+    config/                     # JSON timeouts/limits + env loader
+    constants/                  # messages, status/priority enums
+    utils/                      # app-wide pure helpers (date, …)
+    domain/                     # pure types and mappers — no I/O
+    integrations/
+      http/                     # Axios + API error normalize + API ports
+      query/                    # QueryClient provider + wrappers + key factory
+      form/                     # RHF + Zod adapters
+      styling/                  # NativeWind host bridge
+      ui/                       # re-export fieldops-ui components
+      image/                    # expo-image adapter (AppImage)
+  features/
+    work-orders/
+      list|detail|form/
+        hooks/                  # ViewModels
+        components/
+        screens/                # dumb UI
+        constants/              # feature-local only
+        utils/                  # feature-local only
+mock-api/                       # do not modify server.js
+```
+
+### Dependency direction (enforced on every change)
+
+```
+core/theme|config|constants|utils|domain
+                ↓
+        core/integrations/*
+                ↓
+          features/*/hooks
+                ↓
+     features/*/components|screens
+                ↓
+              app/
+```
+
+- Inner layers never import outer layers.
+- `app/` imports screens (or thin placeholders) and providers from integrations — never Axios/Query/RHF/Zod package paths.
+- Features never import third-party packages except `react` / `react-native` / `expo-router` navigation primitives as needed for UI. All other vendors enter only through `core/integrations/`.
+- Changing Axios, Query, RHF, Zod, NativeWind, or `expo-image` edits `core/integrations/` only.
+
+---
+
+### Layer: `core/theme`
+
+**Responsibility:** Single source of FieldOps design values in the app for layout math and non-component styling.
+
+**Contains:** colours, status→tone maps, spacing, typography, radius — same values as the brief / `@pranadwaghmare2/fieldops-ui` preset.
+
+**Must not:** invent a second palette; dark theme; custom fonts; shadows; duplicate hex in features.
+
+**Token contract:** `bg` `#FFFFFF`, `surface` `#F6F7F9`, `border` `#E3E6EA`, `fg` `#111827`, `fg-muted` `#6B7280`, `primary` `#1D4ED8`, `primary-fg` `#FFFFFF`, `danger` `#DC2626`, `warning` `#D97706`, `success` `#15803D`. Status: `open`→`fg-muted`, `in_progress`→`primary`, `blocked`→`warning`, `done`→`success`. Priority text-only except `urgent`→`danger`. Spacing 1=4…8=32. Radius 10. Hairline borders.
+
+**SOLID:** S — tokens only. O — add tokens, do not fork per screen. D — everything reads tokens, nothing invents them.
+
+---
+
+### Layer: `core/config` | `constants` | `utils` | `domain`
+
+- **config** — timeouts, debounce ms, page size (JSON + typed loaders); `EXPO_PUBLIC_API_URL` via env helper.
+- **constants** — user-facing copy strings, status/priority enums aligned with mock API.
+- **utils** — app-wide pure helpers. Feature-only helpers stay under that feature.
+- **domain** — WorkOrder/User types and pure mappers. No React, no I/O.
+
+---
+
+### Layer: `core/integrations`
+
+**Responsibility:** Isolate every third-party dependency behind adapters/providers.
+
+**Ports:** `http`, `query`, `form`, `styling`, `ui`, `image`.
+
+**Must not:** implement product screens; be imported around via deep vendor paths from features.
+
+**SOLID:** S — one adapter family per concern. O — new vendor behaviour as new/extended port. D — features depend on ports; integrations implement with vendors.
+
+**Platform exception:** `react`, `react-native`, and Expo Router file routes may be used in `app/` and screens. Everything else goes through integrations.
+
+---
+
+### Layer: `features/*`
+
+**Responsibility:** Feature slices with hook ViewModels and dumb screens/components.
+
+**Per-area folders:** `hooks/`, `components/`, `screens/`, optional local `constants/`, `utils/`.
+
+**Must not:** import Axios, `@tanstack/*`, `react-hook-form`, `zod`, `nativewind`, `@pranadwaghmare2/fieldops-ui`, `expo-image` by package path.
+
+**SOLID:** S — screen = render; hook = orchestration. I — narrow ViewModel return shapes. D — depend on integration ports.
+
+---
+
+### Layer: `app/`
+
+**Responsibility:** Expo Router entry, layouts, provider wiring, route → screen mapping.
+
+**Must not:** contain business rules, API calls, form schemas, or Query key construction.
+
+## Anti-patterns (reject in review)
+
+- Feature file importing a vendor package that has an integrations port.
+- Second colour theme or dark mode system.
+- Collapsing this repo with `fieldops-ui` into a monorepo as the distribution model.
+- Putting adapter code inside `features/*/`.
+- Logic-heavy `app/*.tsx` route files.
+- Documenting architecture by name-dropping “clean” / “SOLID” without following the folder contracts above.

@@ -1,0 +1,35 @@
+---
+description: NativeWind host law and FieldOps preset — no second theme
+alwaysApply: true
+---
+
+# Styling & NativeWind — fieldops-app
+
+This app is a NativeWind **host**. The UI library ships class strings and a preset; this repo wires the engine.
+
+## Feasibility law
+
+| Claim | Verdict |
+| --- | --- |
+| NativeWind `className` on RN | Works when **this host** wires NativeWind |
+| Tailwind utilities without NativeWind on RN | Impossible |
+| Invent a second app colour theme | Forbidden — FieldOps tokens / UI preset only |
+
+## Host duties
+
+1. Install `nativewind` v4 + peers (`tailwindcss@^3`, reanimated, safe-area per NW docs).
+2. Babel + Metro (`withNativeWind`) + `global.css`.
+3. `presets: [require('nativewind/preset'), require('@pranadwaghmare2/fieldops-ui/preset')]`.
+4. `content` includes app/src paths **and** `./node_modules/@pranadwaghmare2/fieldops-ui/lib/**/*.{js,jsx,ts,tsx}`.
+5. Screens use components from `core/integrations/ui` — not a parallel design system.
+
+## Theme
+
+- Visual tokens come from the UI preset + `src/core/theme` (same numbers).
+- No dark mode, no custom fonts, no shadows — hairline borders and radius 10 per brief.
+- Do not add Emotion, styled-components, or a third styling system.
+
+## Feature code
+
+- Features do not import `nativewind` directly. Host wiring lives in integrations/styling + root config files.
+- Prefer library components’ `className` / `style` props for overrides.
