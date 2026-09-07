@@ -3,10 +3,14 @@ import { Pressable, StyleSheet, View } from 'react-native';
 
 import { Badge, Text } from '@/core/integrations/ui';
 import type { WorkOrder } from '@/core/types';
-import { colours, spacing } from '@/core/theme';
+import { colours, radius, spacing } from '@/core/theme';
 import { formatDisplayDate } from '@/core/utils';
 
-import { ROW_HEIGHT, STATUS_FILTER_LABELS } from '../constants/listUi';
+import {
+  ROW_CONTENT_HEIGHT,
+  ROW_GAP,
+  STATUS_FILTER_LABELS,
+} from '../constants/listUi';
 
 type WorkOrderListRowProps = {
   item: WorkOrder;
@@ -14,7 +18,7 @@ type WorkOrderListRowProps = {
 };
 
 /**
- * Memoized list row matching the brief layout.
+ * Memoized list row — surface card (brief token role for list rows).
  */
 export const WorkOrderListRow = memo(function WorkOrderListRow({
   item,
@@ -22,10 +26,7 @@ export const WorkOrderListRow = memo(function WorkOrderListRow({
 }: WorkOrderListRowProps) {
   const dueLabel = formatDisplayDate(item.dueAt);
   const assigneeName = item.assignee?.name ?? 'Unassigned';
-  const statusLabel =
-    item.status === 'in_progress'
-      ? STATUS_FILTER_LABELS.in_progress
-      : STATUS_FILTER_LABELS[item.status];
+  const statusLabel = STATUS_FILTER_LABELS[item.status];
 
   return (
     <Pressable
@@ -55,11 +56,15 @@ export const WorkOrderListRow = memo(function WorkOrderListRow({
 
 const styles = StyleSheet.create({
   row: {
-    height: ROW_HEIGHT,
+    height: ROW_CONTENT_HEIGHT,
+    marginBottom: ROW_GAP,
     justifyContent: 'center',
+    paddingHorizontal: spacing[3],
     paddingVertical: spacing[2],
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: colours.border,
+    backgroundColor: colours.surface,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colours.border,
+    borderRadius: radius,
   },
   top: {
     flexDirection: 'row',

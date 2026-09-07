@@ -1,5 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
+  Controller,
+  useFieldArray,
   useForm,
   type FieldValues,
   type Path,
@@ -12,6 +14,13 @@ import { z } from 'zod';
  * Re-export Zod from the form port so features never import `zod` by package path.
  */
 export { z };
+
+/**
+ * Generic RHF helpers — features must not import `react-hook-form` by package path.
+ * Domain schemas stay in feature `validations/`, not in this port.
+ */
+export { Controller, useFieldArray };
+export type { UseFormReturn, UseFormProps, FieldValues, Path };
 
 /**
  * Builds a RHF resolver from a Zod schema without features importing resolvers.

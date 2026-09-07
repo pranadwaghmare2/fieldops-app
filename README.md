@@ -1,85 +1,265 @@
 # FieldOps App
 
-Expo SDK **57** work-order app that consumes [`@pranadwaghmare2/fieldops-ui`](https://www.npmjs.com/package/@pranadwaghmare2/fieldops-ui) from npm.
+Expo SDK **57** work-order app. Consumes the FieldOps UI library as a **published npm package** (not a monorepo, not a relative import).
 
-Architecture: [`docs/architecture-foundation.md`](docs/architecture-foundation.md).  
-Decisions: [`DECISIONS.md`](DECISIONS.md).  
-Agent map: [`CLAUDE.md`](CLAUDE.md) / [`AGENTS.md`](AGENTS.md).
+| Link | What |
+| --- | --- |
+| [npm `@pranadwaghmare2/fieldops-ui`](https://www.npmjs.com/package/@pranadwaghmare2/fieldops-ui) | Hosted package reviewers install via `npm install` |
+| [GitHub `fieldops-ui`](https://github.com/pranadwaghmare2/fieldops-ui) | UI library source repository |
+| [GitHub `fieldops-app`](https://github.com/pranadwaghmare2/fieldops-app) | This app |
+| [docs/architecture-foundation.md](docs/architecture-foundation.md) | Project structure and why |
+| [DECISIONS.md](DECISIONS.md) | Trade-offs graders read closely |
 
-## Prerequisites
+**Review path:** clone → mock API → `.env` → `npm start` → **Expo Go** (SDK 57) on a phone, or a simulator/emulator if you already have one.  
+No checked-in APK. No `expo prebuild` / native `android/` / `ios/` project required.
 
-- Node 18+
-- npm
-- Expo Go matching **SDK 57** (or iOS Simulator / Android Emulator)
+Works on **macOS**, **Windows**, and **Linux** for Node + Expo Go. iOS Simulator requires **macOS + Xcode**.
 
-Do **not** use an Expo Go build for an older SDK — that mismatch is a common start failure.
+## Contents
 
-## Run from a clean clone
+1. [Prerequisites](#1-prerequisites)
+2. [Clone](#2-clone)
+3. [Mock API](#3-mock-api-required-for-data)
+4. [Configure `.env`](#4-configure-env)
+5. [Install and start](#5-install-and-start-the-app)
+6. [Physical device (Expo Go) — primary](#6-physical-device-expo-go--primary)
+7. [Android emulator (when you need it)](#7-android-emulator-when-you-need-it)
+8. [iOS Simulator (macOS, when you need it)](#8-ios-simulator-macos-when-you-need-it)
+9. [Scripts](#9-scripts)
+10. [UI library and NativeWind](#10-ui-library-and-nativewind)
+11. [Troubleshooting](#11-troubleshooting)
+12. [What ships](#12-what-ships)
+
+---
+
+## 1. Prerequisites
+
+### Required on every machine
+
+| Tool | Notes |
+| --- | --- |
+| **Git** | Clone the repos |
+| **Node.js 18+** | LTS recommended |
+| **npm** | Ships with Node (`package-lock.json` only — not yarn/pnpm) |
+| **Expo Go matching SDK 57** | Phone/tablet for the primary review path. Wrong Expo Go major = common start failure |
+
+### Path choice
+
+| How you run the app | What you need |
+| --- | --- |
+| **Physical device + Expo Go** (recommended) | Required tools above + same Wi‑Fi as the machine running `mock-api` |
+| **Android emulator** | Android Studio + SDK + Platform-Tools (`adb`) + one AVD — see [§7](#7-android-emulator-when-you-need-it). Skip install steps if already working. |
+| **iOS Simulator** | **macOS only:** Xcode + iOS Simulator runtime — see [§8](#8-ios-simulator-macos-when-you-need-it). Skip install steps if already working. Windows / Linux cannot run iOS Simulator — use Expo Go on an iPhone. |
+
+Android Studio and Xcode are **prerequisites for the emulator/simulator path**, not for Expo Go on a phone. If those tools are already installed and an emulator/simulator already boots, treat the install sections as optional and jump to the checklists.
+
+---
+
+## 2. Clone
 
 ```bash
 git clone https://github.com/pranadwaghmare2/fieldops-app.git
 cd fieldops-app
-cp .env.example .env
 ```
 
-### 1. Mock API
+Windows (PowerShell or Git Bash): same commands if Git and Node are on `PATH`.
+
+---
+
+## 3. Mock API (required for data)
+
+Dedicated terminal — leave running:
 
 ```bash
+npm install
 npm run mock-api
-# http://localhost:4000
-# CHAOS=0 npm run mock-api   # disable random status 500s while debugging
 ```
 
-Do not modify `mock-api/server.js`.
+- Base URL: `http://localhost:4000`
+- Disable random status `500`s while debugging: `CHAOS=0 npm run mock-api`
+- Do **not** modify `mock-api/server.js`
 
-### 2. API URL (`.env`)
+---
 
-| Target | `EXPO_PUBLIC_API_URL` |
+## 4. Configure `.env`
+
+```bash
+cp -n .env.example .env
+```
+
+Windows PowerShell if `cp -n` fails:
+
+```powershell
+Copy-Item .env.example .env -ErrorAction SilentlyContinue
+```
+
+Set **one** API URL for how you run the app:
+
+| Where the app runs | `EXPO_PUBLIC_API_URL` |
 | --- | --- |
-| iOS simulator | `http://localhost:4000` |
-| Android emulator | `http://10.0.2.2:4000` |
-| Physical device (Expo Go) | `http://<your-machine-LAN-IP>:4000` |
+| iOS Simulator (Mac) | `http://localhost:4000` |
+| Android Emulator | `http://10.0.2.2:4000` |
+| Physical device (Expo Go) | `http://<YOUR_LAN_IP>:4000` |
 
-Phone and laptop must be on the same network. Restart Expo after changing `.env`.
+Find LAN IP:
 
-### 3. App
+- macOS: `ipconfig getifaddr en0` (or System Settings → Network)
+- Windows: `ipconfig` (Wi‑Fi IPv4)
+- Linux: `hostname -I` or `ip a`
+
+**Restart Expo** after any `.env` change (`Ctrl+C`, then `npm start` again).
+
+---
+
+## 5. Install and start the app
+
+Second terminal (mock-api still running):
 
 ```bash
 npm install
 npm start
 ```
 
-Then press `i` (iOS), `a` (Android), or scan the QR code with Expo Go (SDK 57).
+Then:
 
-Scripts:
+| Action | How |
+| --- | --- |
+| Expo terminal | Press `i` (iOS Simulator, macOS), `a` (Android emulator), or scan QR with **Expo Go SDK 57** |
+| Or scripts | `npm run ios` / `npm run android` — both use **`expo start`**, not a native prebuild |
 
-- `npm start` — Expo dev server
-- `npm run ios` / `npm run android` — open platform
-- `npm run mock-api` — local API
-- `npm test` — Jest
-- `npx tsc --noEmit` — typecheck
+These commands open Metro and Expo Go / the simulator. They do **not** generate or require `android/` or `ios/` folders.
 
-## UI library
+---
+
+## 6. Physical device (Expo Go) — primary
+
+1. Install **Expo Go for SDK 57** on the phone.
+2. `npm run mock-api` on your computer.
+3. `.env`: `EXPO_PUBLIC_API_URL=http://<LAN-IP>:4000`.
+4. Same Wi‑Fi as the computer.
+5. `npm start` → scan QR.
+6. If the list fails: firewall port **4000**, LAN IP not `localhost`, mock-api still running.
+
+---
+
+## 7. Android emulator (when you need it)
+
+Use this section only if you want the Android emulator instead of (or in addition to) a physical device. Official docs are the source of truth for Studio UI labels — they change between Studio versions.
+
+### Install Android Studio (Windows / macOS / Linux)
+
+Follow the OS section in Google’s install guide (do not invent alternate menu paths):
+
+- **Install guide (Windows, macOS, Linux):** [Install Android Studio](https://developer.android.com/studio/install)
+- **Download latest Studio:** [Android Studio download](https://developer.android.com/studio)
+- **SDK Manager / update tools:** [Update the IDE and SDK tools](https://developer.android.com/studio/intro/update)
+- **Environment variables (`ANDROID_HOME`, PATH):** [Environment variables](https://developer.android.com/tools/variables)
+
+Complete the Setup Wizard so the Android SDK is downloaded.
+
+### Platform-Tools and `adb`
+
+Expo’s Android workflow expects Platform-Tools (includes `adb`) from the SDK:
+
+- [SDK Platform-Tools](https://developer.android.com/tools/releases/platform-tools)
+- [Android Debug Bridge (`adb`)](https://developer.android.com/tools/adb)
+
+Prefer installing Platform-Tools via **SDK Manager** inside Android Studio (see the update guide above). Put `platform-tools` on your `PATH` if the shell cannot find `adb` ([environment variables](https://developer.android.com/tools/variables)).
+
+### Create and start an AVD
+
+- [Create and manage virtual devices](https://developer.android.com/studio/run/managing-avds)
+
+### Checklist (skip items already true)
+
+- [ ] Android Studio installed for your OS via the install guide
+- [ ] SDK installed (Setup Wizard / SDK Manager completed)
+- [ ] Platform-Tools present — `adb version` works in a terminal
+- [ ] At least one system image + AVD created
+- [ ] Emulator boots from Device Manager / AVD Manager
+- [ ] `.env` uses `http://10.0.2.2:4000`
+- [ ] mock-api running; `npm start` then `a`, or `npm run android`
+
+---
+
+## 8. iOS Simulator (macOS, when you need it)
+
+**Windows and Linux:** iOS Simulator is not available. Use [§6](#6-physical-device-expo-go--primary) on a physical iPhone.
+
+### Install Xcode and Simulator (macOS)
+
+Use Apple’s current docs (Xcode Settings UI names change; prefer these hubs over blog posts):
+
+- **Xcode:** [Xcode on the Apple Developer site](https://developer.apple.com/xcode/) (App Store or developer downloads)
+- **Run on Simulator or device:** [Running your app in Simulator or on a device](https://developer.apple.com/documentation/xcode/running-your-app-in-simulator-or-on-a-device)
+- **Simulator runtimes / extra platforms:** [Installing additional simulator runtimes](https://developer.apple.com/documentation/xcode/installing-additional-simulator-runtimes)
+
+Open Xcode once after install so first-launch components finish. Install an **iOS** Simulator runtime if none is present (Xcode Settings → Platforms, or the doc above).
+
+Command-line tools (when `xcodebuild` / Simulator CLI are needed):
+
+```bash
+xcode-select -p
+# If unset, point at Xcode (path may vary):
+# sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
+```
+
+### Checklist (skip items already true)
+
+- [ ] macOS with Xcode installed and opened once
+- [ ] iOS Simulator runtime installed
+- [ ] Simulator boots (Xcode → Open Developer Tool → Simulator, or Expo `i`)
+- [ ] `.env` uses `http://localhost:4000`
+- [ ] mock-api running; `npm start` then `i`, or `npm run ios`
+
+---
+
+## 9. Scripts
+
+| Command | Purpose |
+| --- | --- |
+| `npm start` | Expo Metro (`expo start`) |
+| `npm run android` | `expo start --android` |
+| `npm run ios` | `expo start --ios` (macOS) |
+| `npm run mock-api` | Local API on port 4000 |
+| `npm test` | Jest |
+| `npx tsc --noEmit` | Typecheck |
+
+---
+
+## 10. UI library and NativeWind
+
+Package: [`@pranadwaghmare2/fieldops-ui` on npm](https://www.npmjs.com/package/@pranadwaghmare2/fieldops-ui)  
+Source: [`fieldops-ui` on GitHub](https://github.com/pranadwaghmare2/fieldops-ui)
 
 ```bash
 npm install @pranadwaghmare2/fieldops-ui
 ```
 
-NativeWind host wiring (already in this repo):
+Already wired in this app:
 
 - Tailwind `content` includes `./node_modules/@pranadwaghmare2/fieldops-ui/lib/**/*.{js,jsx,ts,tsx}`
 - Presets: `nativewind/preset` + `@pranadwaghmare2/fieldops-ui/preset`
-- Features import components from `src/core/integrations/ui`, not the package path
+- Features import UI from `src/core/integrations/ui`
 
-## Project layout (short)
+---
 
-```
-app/                 Expo Router shells + providers
-src/core/            theme, config, types, integrations
-src/features/        work-orders (list screen live; detail/form stubs)
-mock-api/            local Node API
-```
+## 11. Troubleshooting
 
-## Status
+| Symptom | Fix |
+| --- | --- |
+| Expo Go wrong SDK | Install Expo Go for **SDK 57** |
+| Unstyled UI | Confirm NativeWind + UI preset + `content` scans `fieldops-ui/lib` |
+| Phone cannot reach API | LAN IP in `.env`, same Wi‑Fi, mock-api up, firewall allows **4000** |
+| Android emu API fail | Use `http://10.0.2.2:4000`, not `localhost` |
+| `.env` ignored | Restart `npm start` |
+| `adb` not found | Install Platform-Tools via SDK Manager; add to PATH ([variables](https://developer.android.com/tools/variables)) |
+| Expecting `android/` / `ios/` folders | Not used — Expo Go path only; do not run `expo prebuild` for review |
 
-Screen 1 (work-order list) is live: cursor pagination, status filter, debounced search, pull-to-refresh, distinct empty/error states. Detail and create routes are placeholders for now.
+---
+
+## 12. What ships
+
+- **List** — cursor pagination, status filter, debounced search, pull-to-refresh, distinct empty / filtered / error
+- **Detail** — full record, optimistic status + rollback + Retry, Edit, Delete (confirm), header **Back** to list
+- **Create / edit** — one form (mode by route), Zod + 422 field map, 409 Keep mine / Load theirs, checklist add/remove/reorder

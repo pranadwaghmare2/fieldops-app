@@ -1,12 +1,17 @@
 import { Status } from '@/core/types';
+import { spacing } from '@/core/theme';
 
 import type { StatusFilter } from '../types';
 
 /**
  * FlatList row / window tuning for the work-order list.
- * Fixed row height enables getItemLayout for cheaper scroll measurement.
+ * Fixed stride (surface card height + gap) enables getItemLayout.
  */
-export const ROW_HEIGHT = 104;
+export const ROW_CONTENT_HEIGHT = 104;
+/** Gap between surface cards — spacing[2]. */
+export const ROW_GAP = spacing[2];
+/** Total FlatList item stride for getItemLayout. */
+export const ROW_STRIDE = ROW_CONTENT_HEIGHT + ROW_GAP;
 
 export const LIST_WINDOW_SIZE = 7;
 export const LIST_MAX_TO_RENDER_PER_BATCH = 8;

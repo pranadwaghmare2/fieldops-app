@@ -4,6 +4,7 @@ import {
   useInfiniteQuery,
   useMutation,
   useQuery,
+  useQueryClient,
 } from '@tanstack/react-query';
 import type {
   InfiniteData,
@@ -14,6 +15,14 @@ import type {
 import { useState, type ReactNode } from 'react';
 
 export { queryKeys } from './keys';
+
+/**
+ * QueryClient accessor — features use this instead of importing TanStack directly.
+ * Needed for optimistic cache writes and invalidation in ViewModels.
+ */
+export function useAppQueryClient() {
+  return useQueryClient();
+}
 
 /**
  * App QueryClient defaults — tune in DECISIONS.md if needed.
