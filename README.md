@@ -39,7 +39,7 @@ Works on **macOS**, **Windows**, and **Linux** for Node + Expo Go. iOS Simulator
 | Tool | Notes |
 | --- | --- |
 | **Git** | Clone the repos |
-| **Node.js 18+** | LTS recommended |
+| **Node.js 20.19.4+** | React Native 0.86 requires `^20.19.4 \|\| ^22.13.0 \|\| ^24.3.0 \|\| >=25`. Node 22 LTS is the safe pick. (`mock-api` alone runs on Node 18+.) |
 | **npm** | Ships with Node (`package-lock.json` only — not yarn/pnpm) |
 | **Expo Go matching SDK 57** | The app that runs this project on a real phone — [Android (Play Store)](https://play.google.com/store/apps/details?id=host.exp.exponent) · [iOS (App Store)](https://apps.apple.com/app/expo-go/id982107779). Wrong Expo Go major = common start failure |
 
@@ -76,7 +76,8 @@ npm run mock-api
 ```
 
 - Base URL: `http://localhost:4000`
-- Disable random status `500`s while debugging: `CHAOS=0 npm run mock-api`
+- Disable random status `500`s while debugging: `CHAOS=0 npm run mock-api`  
+  (Windows PowerShell: `$env:CHAOS=0; npm run mock-api`)
 - Do **not** modify `mock-api/server.js`
 
 ---
