@@ -26,9 +26,21 @@ import {
 } from '../services';
 import type {
   UseWorkOrderFormResult,
+  WorkOrderFormConflict,
   WorkOrderFormParams,
   WorkOrderFormValues,
 } from '../types';
+import type {
+  ConflictFieldKey,
+  ConflictPicks,
+  ConflictSide,
+} from '../utils/conflictSnapshot';
+import {
+  applyConflictPicks,
+  buildConflictSnapshot,
+  defaultConflictPicks,
+  unresolvedConflictKeys,
+} from '../utils/conflictSnapshot';
 import {
   currentFromConflict,
   nextVersionFromConflict,
@@ -50,8 +62,17 @@ export function useWorkOrderForm({
   const queryClient = useAppQueryClient();
   const versionRef = useRef<number | null>(null);
   const [formBanner, setFormBanner] = useState<string | null>(null);
-  const [conflict, setConflict] = useState<{ message: string } | null>(null);
+  const [conflict, setConflict] = useState<WorkOrderFormConflict | null>(null);
+  const [mergePicks, setMergePicks] = useState<ConflictPicks>({});
+  const [isMergeOpen, setIsMergeOpen] = useState(false);
+  const [mergeNotice, setMergeNotice] = useState<string | null>(null);
   const [hasHydratedEdit, setHasHydratedEdit] = useState(mode === 'create');
+  // Read inside the mutation error handler, which is not re-created per render.
+  const isMergeOpenRef = useRef(false);
+
+  useEffect(() => {
+    isMergeOpenRef.current = isMergeOpen;
+  }, [isMergeOpen]);
 
   const form = useAppForm<WorkOrderFormValues>({
     // Port resolver cast keeps Zod/RHF generics stable across versions.
@@ -87,6 +108,13 @@ export function useWorkOrderForm({
       ...users.map((user) => ({ label: user.name, value: user.id })),
     ];
   }, [usersQuery.data]);
+
+  const resolveAssigneeName = useCallback(
+    (assigneeId: string | null) =>
+      assigneeOptions.find((option) => option.value === assigneeId)?.label ??
+      'Unassigned',
+    [assigneeOptions],
+  );
 
   const loadUi = useMemo(() => {
     if (mode === 'create') {
@@ -210,16 +238,35 @@ export function useWorkOrderForm({
         applyServerFieldErrors(form, error.fieldErrors);
         applyUnknownFieldErrors(error.fieldErrors);
       }
+      // Field errors live on the form behind the sheet — close it so they show.
+      setIsMergeOpen(false);
       setFormBanner(error.message || null);
       return;
     }
-    if (isApiErrorStatus(error, HttpStatus.Conflict)) {
+    if (isApiErrorStatus<WorkOrder>(error, HttpStatus.Conflict)) {
+      const current = error.current;
+      if (current == null) {
+        // Defensive: mock-api always attaches `current`; fall back to a banner.
+        setFormBanner(error.message || messages.conflictWhy);
+        return;
+      }
+      const rows = buildConflictSnapshot(
+        current,
+        form.getValues(),
+        resolveAssigneeName,
+      );
       setConflict({
-        message: error.message.trim() || messages.conflictBanner,
+        message: error.message.trim() || messages.conflictWhy,
+        rows,
+        current,
       });
+      // A fresh conflict invalidates any picks made against the older snapshot.
+      setMergePicks(defaultConflictPicks(rows));
+      setMergeNotice(isMergeOpenRef.current ? messages.conflictMergeStale : null);
       setFormBanner(null);
       return;
     }
+    setIsMergeOpen(false);
     setFormBanner(
       isApiError(error) && error.message.trim() !== ''
         ? error.message
@@ -231,6 +278,8 @@ export function useWorkOrderForm({
     (values: WorkOrderFormValues) => {
       setFormBanner(null);
       setConflict(null);
+      setIsMergeOpen(false);
+      setMergeNotice(null);
       if (mode === 'create') {
         createMutation.mutate(values);
         return;
@@ -249,38 +298,116 @@ export function useWorkOrderForm({
     void form.handleSubmit(submitValues)();
   }, [form, submitValues]);
 
+  /**
+   * Retries the write with the technician's values. Never disabled by a conflict
+   * count: the race ends as soon as no other writer wins between the 409 and this
+   * PATCH, and the server owns the increment, so we send `current.version` as-is.
+   */
   const onKeepMine = useCallback(() => {
     const values = form.getValues();
-    // Use last conflict's current.version from the mutation error if available.
-    const lastError = updateMutation.error;
-    const nextVersion = nextVersionFromConflict(lastError);
+    const nextVersion =
+      conflict?.current.version ?? nextVersionFromConflict(updateMutation.error);
     if (nextVersion == null) {
       setFormBanner(messages.formSubmitError);
       return;
     }
     versionRef.current = nextVersion;
     setConflict(null);
+    setIsMergeOpen(false);
+    setMergeNotice(null);
     updateMutation.mutate({ values, version: nextVersion });
-  }, [form, updateMutation]);
+  }, [conflict, form, updateMutation]);
 
+  /**
+   * Adopts the server copy as the new base after an explicit confirm, then the
+   * technician re-applies their change on top of it (reload-and-re-apply).
+   */
   const onLoadTheirs = useCallback(() => {
-    const current = currentFromConflict(updateMutation.error);
+    const current = conflict?.current ?? currentFromConflict(updateMutation.error);
     if (current == null) {
       return;
     }
-    Alert.alert(messages.conflictLoadTheirs, messages.conflictBanner, [
-      { text: messages.cancel, style: 'cancel' },
-      {
-        text: messages.conflictLoadTheirs,
-        onPress: () => {
-          versionRef.current = current.version;
-          form.reset(workOrderToFormValues(current));
-          setConflict(null);
-          setFormBanner(null);
+    Alert.alert(
+      messages.conflictLoadTheirs,
+      messages.conflictLoadTheirsConfirm,
+      [
+        { text: messages.cancel, style: 'cancel' },
+        {
+          text: messages.conflictLoadTheirs,
+          onPress: () => {
+            versionRef.current = current.version;
+            form.reset(workOrderToFormValues(current));
+            setConflict(null);
+            setIsMergeOpen(false);
+            setMergeNotice(null);
+            setFormBanner(null);
+          },
         },
-      },
-    ]);
-  }, [form, updateMutation.error]);
+      ],
+    );
+  }, [conflict, form, updateMutation.error]);
+
+  const onOpenMerge = useCallback(() => {
+    if (conflict == null) {
+      return;
+    }
+    setMergePicks(defaultConflictPicks(conflict.rows));
+    setMergeNotice(null);
+    setIsMergeOpen(true);
+  }, [conflict]);
+
+  const onCancelMerge = useCallback(() => {
+    // Cancel leaves both the banner and the typed form untouched.
+    setIsMergeOpen(false);
+    setMergeNotice(null);
+  }, []);
+
+  const onPickSide = useCallback((key: ConflictFieldKey, side: ConflictSide) => {
+    // Radio semantics: one side replaces the other, so "both" is unreachable.
+    setMergePicks((previous) => ({ ...previous, [key]: side }));
+    setMergeNotice(null);
+  }, []);
+
+  const onUseAllFrom = useCallback(
+    (side: ConflictSide) => {
+      if (conflict == null) {
+        return;
+      }
+      const picks: ConflictPicks = {};
+      for (const row of conflict.rows) {
+        picks[row.key] = row.isSame ? 'yours' : side;
+      }
+      setMergePicks(picks);
+      setMergeNotice(null);
+    },
+    [conflict],
+  );
+
+  /**
+   * Writes the merged result into the form before the PATCH so the technician
+   * keeps the resolved values on screen even if this attempt also conflicts.
+   */
+  const onApplyMerge = useCallback(() => {
+    if (conflict == null) {
+      return;
+    }
+    if (unresolvedConflictKeys(conflict.rows, mergePicks).length > 0) {
+      setMergeNotice(messages.conflictMergeUnresolved);
+      return;
+    }
+    const merged = applyConflictPicks(
+      form.getValues(),
+      conflict.current,
+      mergePicks,
+    );
+    const version = conflict.current.version;
+    form.reset(merged);
+    versionRef.current = version;
+    setMergeNotice(null);
+    // Sheet stays open across the retry: if this attempt also conflicts, the
+    // error handler rebuilds the rows in place instead of losing the context.
+    updateMutation.mutate({ values: merged, version });
+  }, [conflict, form, mergePicks, updateMutation]);
 
   const onRetryLoad = useCallback(() => {
     void detailQuery.refetch();
@@ -291,6 +418,19 @@ export function useWorkOrderForm({
     createMutation.isPending ||
     updateMutation.isPending;
 
+  const merge = useMemo(
+    () => ({
+      isOpen: isMergeOpen,
+      picks: mergePicks,
+      unresolvedKeys:
+        conflict == null
+          ? []
+          : unresolvedConflictKeys(conflict.rows, mergePicks),
+      notice: mergeNotice,
+    }),
+    [conflict, isMergeOpen, mergeNotice, mergePicks],
+  );
+
   return {
     mode,
     form,
@@ -298,10 +438,16 @@ export function useWorkOrderForm({
     isSubmitting,
     formBanner,
     conflict,
+    merge,
     assigneeOptions,
     onSubmit,
     onKeepMine,
     onLoadTheirs,
+    onOpenMerge,
+    onCancelMerge,
+    onPickSide,
+    onUseAllFrom,
+    onApplyMerge,
     onRetryLoad,
   };
 }
