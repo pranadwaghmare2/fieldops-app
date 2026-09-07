@@ -41,7 +41,7 @@ Works on **macOS**, **Windows**, and **Linux** for Node + Expo Go. iOS Simulator
 | **Git** | Clone the repos |
 | **Node.js 18+** | LTS recommended |
 | **npm** | Ships with Node (`package-lock.json` only — not yarn/pnpm) |
-| **Expo Go matching SDK 57** | Phone/tablet for the primary review path. Wrong Expo Go major = common start failure |
+| **Expo Go matching SDK 57** | The app that runs this project on a real phone — [Android (Play Store)](https://play.google.com/store/apps/details?id=host.exp.exponent) · [iOS (App Store)](https://apps.apple.com/app/expo-go/id982107779). Wrong Expo Go major = common start failure |
 
 ### Path choice
 
@@ -133,7 +133,9 @@ These commands open Metro and Expo Go / the simulator. They do **not** generate 
 
 ## 6. Physical device (Expo Go) — primary
 
-1. Install **Expo Go for SDK 57** on the phone.
+Expo Go is the mobile app that loads this project over Metro — no APK, no Xcode build.
+
+1. Install **Expo Go for SDK 57**: [Android (Play Store)](https://play.google.com/store/apps/details?id=host.exp.exponent) · [iOS (App Store)](https://apps.apple.com/app/expo-go/id982107779).
 2. `npm run mock-api` on your computer.
 3. `.env`: `EXPO_PUBLIC_API_URL=http://<LAN-IP>:4000`.
 4. Same Wi‑Fi as the computer.
@@ -178,7 +180,19 @@ Prefer installing Platform-Tools via **SDK Manager** inside Android Studio (see 
 - [ ] At least one system image + AVD created
 - [ ] Emulator boots from Device Manager / AVD Manager
 - [ ] `.env` uses `http://10.0.2.2:4000`
-- [ ] mock-api running; `npm start` then `a`, or `npm run android`
+- [ ] mock-api running
+
+### Run it once the emulator exists
+
+Start the emulator from Android Studio (Device Manager), then in this repo:
+
+```bash
+# macOS / Linux / Windows (Git Bash or PowerShell)
+npm run android          # = expo start --android
+# or: npm start, then press "a"
+```
+
+Expo Go is installed into the emulator automatically on first run.
 
 ---
 
@@ -210,7 +224,17 @@ xcode-select -p
 - [ ] iOS Simulator runtime installed
 - [ ] Simulator boots (Xcode → Open Developer Tool → Simulator, or Expo `i`)
 - [ ] `.env` uses `http://localhost:4000`
-- [ ] mock-api running; `npm start` then `i`, or `npm run ios`
+- [ ] mock-api running
+
+### Run it once Xcode is set up
+
+```bash
+# macOS only
+npm run ios              # = expo start --ios
+# or: npm start, then press "i"
+```
+
+Expo picks a booted simulator, or boots one for you.
 
 ---
 
@@ -262,4 +286,5 @@ Already wired in this app:
 
 - **List** — cursor pagination, status filter, debounced search, pull-to-refresh, distinct empty / filtered / error
 - **Detail** — full record, optimistic status + rollback + Retry, Edit, Delete (confirm), header **Back** to list
-- **Create / edit** — one form (mode by route), Zod + 422 field map, 409 Keep mine / Load theirs, checklist add/remove/reorder
+- **Create / edit** — one form (mode by route), Zod + 422 field map, native due-date picker (ISO on the wire), checklist add/remove/reorder
+- **409 conflicts** — banner explains why the save was refused and shows yours-vs-theirs per field; resolve with **Keep mine**, **Load theirs**, or **Merge field by field**. Typed input is never discarded silently ([DECISIONS §3](DECISIONS.md#3-409-conflict-behaviour))
