@@ -69,7 +69,6 @@ src/
 mock-api/                       # do not modify server.js
 docs/
   architecture-foundation.md    # this file
-  builds/                       # optional Android release APK (smoke only)
 DECISIONS.md
 ```
 
@@ -122,4 +121,4 @@ Root [`DECISIONS.md`](../DECISIONS.md): five defendable decisions, NativeWind bo
 
 ## Explicit non-goals
 
-Auth, offline sync, settings, EAS/store publishing, dark mode, splash polish, FlashList, modifying `mock-api/server.js`. Release APK under `docs/builds/` is **sideload smoke only**; primary review path is Expo Go + local mock-api.
+Auth, offline sync, settings, EAS/store publishing, dark mode, splash polish, FlashList, modifying `mock-api/server.js`, checked-in APK / committed `android`/`ios` prebuild. Primary review path is Expo Go + local mock-api via `npm start`.

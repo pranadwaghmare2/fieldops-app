@@ -37,7 +37,7 @@ Grader handoff. Keep dense. Deep folder walkthrough: [docs/architecture-foundati
 - **Why:** iOS sim, Android emu, and phones need different base URLs.
 - **What:** Documented env var; reviewer sets LAN IP for physical Expo Go.
 - **Rejected:** In-app settings screen — out of scope.
-- **How:** `.env.example` + `src/core/config/env.ts`. Baked into release APK at build time (see §4).
+- **How:** `.env.example` + `src/core/config/env.ts`. Restart Expo after changes.
 
 ### Expo SDK 57 + Expo Router
 - **Why:** Brief pins SDK 57; Router fits file-based screens.
@@ -70,15 +70,15 @@ Status write ~20% `500`: optimistic UI rolls back; show backend message (else co
 - **Cut:** Native due **date picker** (kept ISO `TextField`).  
   **Why:** Brief accepts ISO and will not mark down.  
   **Rejected alternative:** `@react-native-community/datetimepicker` — **better field UX** for technicians; upgrade if this ships past assessment.
-- **Cut:** Treating release APK as primary review path.  
-  **Why:** `EXPO_PUBLIC_API_URL` is build-time; checked-in APK is sideload **smoke** only. Functional review = Expo Go + local mock-api.  
-  **Rejected alternative:** Hosting a public demo API for the APK.
+- **Cut:** Release APK packaging and local `expo prebuild` / native `android`/`ios` review path.  
+  **Why:** Reviewers run Expo Go + Metro only (`npm start` / `expo start --android|ios`). Prebuild trees and APK bake-time env confuse the clean-clone path.  
+  **Rejected alternative:** Checked-in APK or committed native projects as the primary handoff.
 - **Not cut:** `DELETE /work-orders/:id` — mock-api exposes it; detail Delete + confirm uses it.
 
 ## 5. AI tools used and where
 
 - **Tool:** Cursor Agent  
-  **Where:** Foundation, list, detail + create/edit (services, ViewModels, 409 / status optimism), architecture rules, README / DECISIONS handoff, local release APK packaging.  
+  **Where:** Foundation, list, detail + create/edit (services, ViewModels, 409 / status optimism), architecture rules, README / DECISIONS handoff.  
   **Not used for:** Modifying `mock-api/server.js`.
 
 ---
@@ -93,6 +93,7 @@ Status write ~20% `500`: optimistic UI rolls back; show backend message (else co
 ### Feature: work-order detail
 - Route `app/work-orders/[id]/index.tsx`.
 - Optimistic status patches detail + list caches; rollback + Retry; checklist read-only (tap → edit hint); Delete confirm.
+- Header **Back** always returns to list (`router.back()` or `replace('/')`) because list lives outside the nested stack.
 
 ### Feature: work-order form
 - Shared screen/hook; create `/work-orders/new`, edit `/work-orders/[id]/edit`.
