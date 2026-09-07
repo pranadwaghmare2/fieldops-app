@@ -1,8 +1,8 @@
 # DECISIONS.md — fieldops-app
 
-Grader handoff. Keep dense. Deep folder walkthrough: [docs/architecture-foundation.md](docs/architecture-foundation.md).
+Grader handoff (~one page). Folder walkthrough: [docs/architecture-foundation.md](docs/architecture-foundation.md).
 
-## Menu
+## Contents
 
 1. [Five decisions to defend](#1-five-decisions-to-defend)
 2. [NativeWind / UI package boundary](#2-nativewind--ui-package-boundary)
@@ -29,21 +29,21 @@ Grader handoff. Keep dense. Deep folder walkthrough: [docs/architecture-foundati
 
 ### npm `@pranadwaghmare2/fieldops-ui` (library vs app)
 - **Why:** Brief requires a real package boundary, not a monorepo.
-- **What:** App installs published npm package; library owns five components + preset tokens; app owns screens, NativeWind host, `ScreenShell` / `SurfaceCard`, and product logic.
-- **Rejected:** `file:` / monorepo / copying library source into the app — easier, fails the exercise.
-- **How:** README NativeWind `content` + preset; features use `integrations/ui` only. No library republish needed to change which Button `variant`/`size` the app passes.
+- **What:** App installs the published npm package; library owns five components + preset; app owns screens, NativeWind host, layout shells, and product logic.
+- **Rejected:** `file:` / monorepo / vendoring library source — easier, fails the exercise.
+- **How:** [npm](https://www.npmjs.com/package/@pranadwaghmare2/fieldops-ui) · [GitHub](https://github.com/pranadwaghmare2/fieldops-ui). Host wires preset + `content` scan; features use `integrations/ui` only.
 
 ### `EXPO_PUBLIC_API_URL` for API host
-- **Why:** iOS sim, Android emu, and phones need different base URLs.
+- **Why:** iOS Simulator, Android emulator, and phones need different base URLs.
 - **What:** Documented env var; reviewer sets LAN IP for physical Expo Go.
 - **Rejected:** In-app settings screen — out of scope.
 - **How:** `.env.example` + `src/core/config/env.ts`. Restart Expo after changes.
 
-### Expo SDK 57 + Expo Router
-- **Why:** Brief pins SDK 57; Router fits file-based screens.
-- **What:** SDK 57 app; Expo Go must match; routes for list / detail / new / edit.
-- **Rejected:** Older SDK or library `example-expo` (SDK 51) — breaks Expo Go.
-- **How:** `docs/architecture-foundation.md` routes table.
+### Expo SDK 57 + Expo Router + Expo Go review path
+- **Why:** Brief pins SDK 57; file routes fit the three screens; clean-clone reviewers should not need native projects.
+- **What:** SDK 57 app; Expo Go must match; Metro via `expo start` / `expo start --android|ios`. No APK, no `expo prebuild` as the review path.
+- **Rejected:** Older SDK; checked-in `android/`/`ios/` or APK as primary handoff.
+- **How:** README runbook; list at `/`, detail/form under `app/work-orders/` with explicit Back fallback to `/`.
 
 ## 2. NativeWind / UI package boundary
 
@@ -69,17 +69,24 @@ Status write ~20% `500`: optimistic UI rolls back; show backend message (else co
   **Rejected alternative:** Budget on polish or duplicate status paths.
 - **Cut:** Native due **date picker** (kept ISO `TextField`).  
   **Why:** Brief accepts ISO and will not mark down.  
-  **Rejected alternative:** `@react-native-community/datetimepicker` — **better field UX** for technicians; upgrade if this ships past assessment.
+  **Rejected alternative:** `@react-native-community/datetimepicker` — better field UX; upgrade if this ships past assessment.
 - **Cut:** Release APK packaging and local `expo prebuild` / native `android`/`ios` review path.  
-  **Why:** Reviewers run Expo Go + Metro only (`npm start` / `expo start --android|ios`). Prebuild trees and APK bake-time env confuse the clean-clone path.  
+  **Why:** Reviewers run Expo Go + Metro only. Prebuild trees and bake-time env confuse the clean-clone path.  
   **Rejected alternative:** Checked-in APK or committed native projects as the primary handoff.
 - **Not cut:** `DELETE /work-orders/:id` — mock-api exposes it; detail Delete + confirm uses it.
 
 ## 5. AI tools used and where
 
-- **Tool:** Cursor Agent  
-  **Where:** Foundation, list, detail + create/edit (services, ViewModels, 409 / status optimism), architecture rules, README / DECISIONS handoff.  
-  **Not used for:** Modifying `mock-api/server.js`.
+I defined the architecture (layers, integration ports, feature MVVM, NativeWind host boundary, 409/status cache rules). AI accelerated drafting under those constraints — it did not invent the system shape.
+
+- **Primary tool:** [Cursor](https://cursor.com) IDE (Agent).
+- **Skills / workflows used:**
+  - **brainstorming** — explore options and lock design before implementation.
+  - **writing-plans** — turn an approved design into step-by-step implementation plans.
+  - **caveman** — compress chat output / keep agent turns token-efficient while preserving technical accuracy.
+  - Other Cursor agent use — draft code, tests, and handoff docs for my review and edits.
+- **Where:** Foundation (theme, config, integrations, router), work-order list / detail / form (services, ViewModels, optimism, 409), architecture rules, README / DECISIONS.
+- **Not used for:** Modifying `mock-api/server.js`. Every architectural choice above remains mine to defend.
 
 ---
 
