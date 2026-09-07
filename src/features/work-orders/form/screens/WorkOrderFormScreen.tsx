@@ -13,7 +13,6 @@ import {
   Button,
   ScreenShell,
   Select,
-  SurfaceCard,
   Text,
   TextField,
 } from '@/core/integrations/ui';
@@ -21,6 +20,9 @@ import { colours, spacing } from '@/core/theme';
 import { Priority } from '@/core/types';
 
 import { ChecklistFields } from '../components/ChecklistFields';
+import { ConflictBanner } from '../components/ConflictBanner';
+import { ConflictMergeModal } from '../components/ConflictMergeModal';
+import { DueDateField } from '../components/DueDateField';
 import { PRIORITY_OPTIONS } from '../constants/formUi';
 import { useWorkOrderForm } from '../hooks/useWorkOrderForm';
 import type { WorkOrderFormMode } from '../types';
@@ -40,10 +42,16 @@ export function WorkOrderFormScreen({ mode, id }: WorkOrderFormScreenProps) {
     isSubmitting,
     formBanner,
     conflict,
+    merge,
     assigneeOptions,
     onSubmit,
     onKeepMine,
     onLoadTheirs,
+    onOpenMerge,
+    onCancelMerge,
+    onPickSide,
+    onUseAllFrom,
+    onApplyMerge,
     onRetryLoad,
   } = useWorkOrderForm({ mode, id });
 
@@ -91,28 +99,14 @@ export function WorkOrderFormScreen({ mode, id }: WorkOrderFormScreenProps) {
             keyboardShouldPersistTaps="handled"
           >
             {conflict != null ? (
-              <SurfaceCard style={styles.banner}>
-                <Text role="body">{conflict.message}</Text>
-                <View style={styles.bannerActions}>
-                <Button
-                  variant="primary"
-                  size="md"
-                  onPress={onKeepMine}
-                  isDisabled={isSubmitting}
-                  isLoading={isSubmitting}
-                >
-                  {messages.conflictKeepMine}
-                </Button>
-                <Button
-                  variant="secondary"
-                  size="md"
-                  onPress={onLoadTheirs}
-                  isDisabled={isSubmitting}
-                >
-                  {messages.conflictLoadTheirs}
-                </Button>
-                </View>
-              </SurfaceCard>
+              <ConflictBanner
+                conflict={conflict}
+                isDisabled={isSubmitting}
+                isSubmitting={isSubmitting}
+                onKeepMine={onKeepMine}
+                onLoadTheirs={onLoadTheirs}
+                onOpenMerge={onOpenMerge}
+              />
             ) : null}
 
             {formBanner != null ? (
@@ -197,21 +191,17 @@ export function WorkOrderFormScreen({ mode, id }: WorkOrderFormScreenProps) {
               control={form.control}
               name="dueAt"
               render={({ field, fieldState }) => (
-                <TextField
-                  label="Due date (ISO)"
+                <DueDateField
                   value={field.value}
-                  onChangeText={(text) => {
-                    field.onChange(text);
-                    // Re-run urgent window rule while typing ISO due.
+                  onChange={(isoValue) => {
+                    field.onChange(isoValue);
+                    // Cross-field: re-check the urgent 48h window on each pick.
                     if (form.getValues('priority') === Priority.Urgent) {
                       void form.trigger('dueAt');
                     }
                   }}
-                  onBlur={field.onBlur}
                   errorMessage={fieldState.error?.message}
-                  placeholder="2026-08-22T12:00:00.000Z"
-                  autoCapitalize="none"
-                  editable={!isSubmitting}
+                  isDisabled={isSubmitting}
                 />
               )}
             />
@@ -249,6 +239,18 @@ export function WorkOrderFormScreen({ mode, id }: WorkOrderFormScreenProps) {
           </ScrollView>
         </ScreenShell>
       </KeyboardAvoidingView>
+
+      {conflict != null ? (
+        <ConflictMergeModal
+          rows={conflict.rows}
+          merge={merge}
+          isSubmitting={isSubmitting}
+          onPickSide={onPickSide}
+          onUseAllFrom={onUseAllFrom}
+          onApplyMerge={onApplyMerge}
+          onCancelMerge={onCancelMerge}
+        />
+      ) : null}
     </SafeAreaView>
   );
 }
@@ -282,11 +284,5 @@ const styles = StyleSheet.create({
   fieldLabel: {
     marginBottom: spacing[2],
     color: colours.fgMuted,
-  },
-  banner: {
-    borderColor: colours.warning,
-  },
-  bannerActions: {
-    gap: spacing[2],
   },
 });
